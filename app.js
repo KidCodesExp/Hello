@@ -10,7 +10,7 @@ class Prefs {
     catch { return {}; }
   }
   static save(obj) {
-    localStorage.setItem(Prefs.KEY, JSON.stringify(obj));
+    try { localStorage.setItem(Prefs.KEY, JSON.stringify(obj)); } catch {}
   }
 }
 
@@ -23,34 +23,24 @@ class Store {
   }
   open() {
     return new Promise((resolve, reject) => {
+      if (!('indexedDB' in window)) return reject(new Error('No IndexedDB'));
       const req = indexedDB.open(this.name, this.version);
-      req.onupgradeneeded = (e) => {
+      req.onupgradeneeded = () => {
         const db = req.result;
         if (!db.objectStoreNames.contains('history')) {
           const s = db.createObjectStore('history', { keyPath: 'id', autoIncrement: true });
           s.createIndex('ts', 'ts');
         }
-        if (!db.objectStoreNames.contains('prefs')) {
-          db.createObjectStore('prefs', { keyPath: 'key' });
-        }
       };
       req.onsuccess = () => { this.db = req.result; resolve(this.db); };
       req.onerror = () => reject(req.error);
+      req.onblocked = () => reject(new Error('IDB blocked'));
     });
   }
-  _tx(store, mode) {
-    return this.db.transaction(store, mode).objectStore(store);
-  }
+  _tx(store, mode) { return this.db.transaction(store, mode).objectStore(store); }
   add(store, value) {
     return new Promise((res, rej) => {
       const r = this._tx(store, 'readwrite').add(value);
-      r.onsuccess = () => res(r.result);
-      r.onerror = () => rej(r.error);
-    });
-  }
-  put(store, value) {
-    return new Promise((res, rej) => {
-      const r = this._tx(store, 'readwrite').put(value);
       r.onsuccess = () => res(r.result);
       r.onerror = () => rej(r.error);
     });
@@ -124,14 +114,14 @@ class Analyzer {
   }
 
   static tokens(text) {
-    return text.toLowerCase().match(/[a-z']+/g) || [];
+    return (text.toLowerCase().match(/[a-z']+/g) || []).filter(Boolean);
   }
 
   static analyze(text) {
     const raw = text || '';
     const chars = raw.length;
     const charsNS = raw.replace(/\s/g, '').length;
-    const sentences = (raw.match(/[.!?]+\s|[.!?]+$/g) || []).length;
+    const sentences = (raw.match(/[.!?]+(?=\s|$)/g) || []).length;
     const paragraphs = raw.split(/\n\s*\n/).filter(p => p.trim().length > 0).length;
 
     const toks = Analyzer.tokens(raw);
@@ -141,7 +131,6 @@ class Analyzer {
     const readingSec = Math.round((words / 225) * 60);
     const speakingSec = Math.round((words / 130) * 60);
 
-    // keywords
     const freq = new Map();
     for (const t of toks) {
       if (t.length < 3 || STOP_WORDS.has(t)) continue;
@@ -153,7 +142,6 @@ class Analyzer {
       density: words ? +((c / words) * 100).toFixed(1) : 0
     }));
 
-    // sentiment
     let score = 0;
     for (const t of toks) if (LEXICON[t]) score += LEXICON[t];
     const normalized = words ? +((score / words) * 100).toFixed(1) : 0;
@@ -161,9 +149,8 @@ class Analyzer {
     if (normalized > 3) sentLabel = 'Positive';
     else if (normalized < -3) sentLabel = 'Negative';
 
-    // readability
     const syll = toks.reduce((a, w) => a + Analyzer.syllables(w), 0);
-    const fk = words && sentences
+    const fk = (words && sentences)
       ? 206.835 - 1.015 * (words / sentences) - 84.6 * (syll / words)
       : 0;
     const fkClamped = Math.max(0, Math.min(100, fk));
@@ -203,7 +190,7 @@ class Parser {
     this.onProgress = onProgress || (() => {});
     if (window.pdfjsLib) {
       pdfjsLib.GlobalWorkerOptions.workerSrc =
-        'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.worker.min.js';
+        'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
     }
   }
 
@@ -250,7 +237,7 @@ class Parser {
 }
 
 /* =========================================================
-   TILT — 3D parallax on cards
+   TILT
    ========================================================= */
 class Tilt {
   constructor(selector, max = 7) {
@@ -287,7 +274,7 @@ class Tilt {
 }
 
 /* =========================================================
-   MAGNETIC — buttons pull toward cursor
+   MAGNETIC
    ========================================================= */
 class Magnetic {
   constructor(selector, strength = 0.14) {
@@ -312,7 +299,7 @@ class Magnetic {
 }
 
 /* =========================================================
-   TOUCH FX — ripple / shockwave / particles
+   TOUCH FX
    ========================================================= */
 class TouchFx {
   constructor() {
@@ -383,7 +370,6 @@ class App {
     this.tilt = null;
     this.magnetic = null;
     this.parser = new Parser(msg => this.setStatus(msg, true));
-    this.saveTimer = null;
     this.debounceTimer = null;
     this.currentAnalysis = null;
 
@@ -393,7 +379,7 @@ class App {
 
   async init() {
     try { await this.store.open(); }
-    catch { this.toast.err('IndexedDB unavailable — history disabled'); }
+    catch (e) { console.warn('[Lumen] store:', e); }
 
     this.loadPrefs();
     this.buildEffectOptions();
@@ -401,11 +387,9 @@ class App {
     this.tilt = new Tilt('[data-tilt]');
     this.magnetic = new Magnetic('[data-magnetic]');
 
-    // delegate some listeners on re-render safety
     this.refresh();
   }
 
-  /* ---------- DOM binding ---------- */
   bind() {
     this.$('textInput').addEventListener('input', () => this.scheduleRefresh());
     this.$('clearBtn').addEventListener('click', () => this.clear());
@@ -417,11 +401,9 @@ class App {
       if (e.target.id === 'historyModal') this.closeHistory();
     });
 
-    // theme + focus switches
     this.$('themeSwitch').addEventListener('click', () => this.toggleTheme());
     this.$('focusSwitch').addEventListener('click', () => this.toggleFocus());
 
-    // dropzone
     const dz = this.$('dropzone');
     const fi = this.$('fileInput');
     dz.addEventListener('click', () => fi.click());
@@ -441,14 +423,12 @@ class App {
       if (f) this.handleFile(f);
     });
 
-    // effects panel
     this.$('effectsToggle').addEventListener('click', () => this.toggleEffectsPanel());
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') this.closeHistory();
     });
   }
 
-  /* ---------- prefs ---------- */
   loadPrefs() {
     const p = Prefs.load();
     const theme = p.theme || 'dark';
@@ -470,7 +450,6 @@ class App {
     Prefs.save({ ...Prefs.load(), ...extra });
   }
 
-  /* ---------- theme / focus ---------- */
   toggleTheme() {
     const cur = document.documentElement.dataset.theme;
     const next = cur === 'dark' ? 'light' : 'dark';
@@ -485,12 +464,12 @@ class App {
     this.savePrefs({ focus: on });
   }
 
-  /* ---------- effects panel ---------- */
   toggleEffectsPanel() {
     const panel = this.$('effectsPanel');
     const open = panel.classList.toggle('open');
     this.$('effectsToggle').setAttribute('aria-expanded', open ? 'true' : 'false');
   }
+
   buildEffectOptions() {
     const switches = [
       { id: 'flip',   label: 'Mechanical' },
@@ -499,10 +478,10 @@ class App {
       { id: 'pulse',  label: 'Pulse' }
     ];
     const touches = [
-      { id: 'ripple',     label: 'Ripple' },
-      { id: 'shockwave',  label: 'Shockwave' },
-      { id: 'both',       label: 'Both' },
-      { id: 'particles',  label: 'Particles' }
+      { id: 'ripple',    label: 'Ripple' },
+      { id: 'shockwave', label: 'Shockwave' },
+      { id: 'both',      label: 'Both' },
+      { id: 'particles', label: 'Particles' }
     ];
 
     const sw = this.$('switchOptions');
@@ -541,7 +520,6 @@ class App {
     });
   }
 
-  /* ---------- refresh ---------- */
   scheduleRefresh() {
     clearTimeout(this.debounceTimer);
     this.debounceTimer = setTimeout(() => this.refresh(), 140);
@@ -563,7 +541,6 @@ class App {
     this.$('mReading').textContent = Analyzer.fmtTime(a.readingSec);
     this.$('mSpeaking').textContent = `${Analyzer.fmtTime(a.speakingSec)} speaking`;
 
-    // keywords
     const kw = this.$('keywords');
     kw.innerHTML = '';
     if (!a.keywords.length) {
@@ -577,25 +554,23 @@ class App {
       }
     }
 
-    // sentiment
     const dot = this.$('sentDot');
     dot.className = 'sentiment-dot';
     dot.classList.add(a.sentLabel === 'Positive' ? 'pos' : a.sentLabel === 'Negative' ? 'neg' : 'neu');
     this.$('mSentiment').textContent = a.sentLabel;
     this.$('sentScore').textContent = `Score ${a.sentScore}`;
 
-    // readability
     this.$('readFill').style.width = `${a.readability}%`;
     this.$('readScore').textContent = a.readability.toFixed(1);
     this.$('readGrade').textContent = a.grade;
   }
 
-  /* ---------- actions ---------- */
   clear() {
     this.$('textInput').value = '';
     this.refresh();
     this.setStatus('Cleared');
   }
+
   loadSample() {
     this.$('textInput').value =
 `Design is not decoration. It is the discipline of removing everything that does not serve the user, then making what remains feel inevitable. A good interface is quiet: it does not shout, it does not ask for attention it has not earned. It responds, it yields, it clarifies.
@@ -625,7 +600,7 @@ Clarity is difficult. Simplicity is harder. Anyone can add, only a few know what
       this.toast.ok(`${file.name} · ${text.length.toLocaleString()} chars`);
       this.setStatus('Loaded');
     } catch (err) {
-      console.error(err);
+      console.error('[Lumen] parse:', err);
       this.toast.err(`Failed: ${err.message || err}`);
       this.setStatus('Error');
     }
@@ -636,10 +611,12 @@ Clarity is difficult. Simplicity is harder. Anyone can add, only a few know what
     if (!text) { this.toast.err('Nothing to save'); return; }
     const a = this.currentAnalysis;
     const title = text.slice(0, 60).replace(/\s+/g, ' ') || 'Untitled';
+    if (!this.store.db) { this.toast.err('History unavailable'); return; }
     try {
       await this.store.add('history', { ts: Date.now(), text, title, metrics: a });
       this.toast.ok('Saved to history');
     } catch (err) {
+      console.error('[Lumen] save:', err);
       this.toast.err('Save failed');
     }
   }
@@ -648,6 +625,10 @@ Clarity is difficult. Simplicity is harder. Anyone can add, only a few know what
     const list = this.$('historyList');
     list.innerHTML = '<div class="empty">Loading…</div>';
     this.$('historyModal').hidden = false;
+    if (!this.store.db) {
+      list.innerHTML = '<div class="empty">History unavailable (no IndexedDB).</div>';
+      return;
+    }
     try {
       const items = (await this.store.all('history')).sort((a, b) => b.ts - a.ts);
       list.innerHTML = '';
@@ -662,7 +643,7 @@ Clarity is difficult. Simplicity is harder. Anyone can add, only a few know what
         row.innerHTML = `
           <div class="hi-body">
             <div class="hi-title"></div>
-            <div class="hi-meta">${d} · ${it.metrics?.words ?? 0} words</div>
+            <div class="hi-meta">${d} · ${(it.metrics && it.metrics.words) || 0} words</div>
           </div>
           <div class="hi-actions">
             <button data-act="resume">Resume</button>
@@ -684,6 +665,7 @@ Clarity is difficult. Simplicity is harder. Anyone can add, only a few know what
         list.appendChild(row);
       }
     } catch (err) {
+      console.error('[Lumen] history:', err);
       list.innerHTML = '<div class="empty">History unavailable.</div>';
     }
   }
@@ -694,7 +676,12 @@ Clarity is difficult. Simplicity is harder. Anyone can add, only a few know what
    BOOT
    ========================================================= */
 window.addEventListener('DOMContentLoaded', async () => {
-  const app = new App();
-  await app.init();
-  window.__lumen = app;
+  try {
+    const app = new App();
+    await app.init();
+    window.__lumen = app;
+    console.log('[Lumen] booted');
+  } catch (err) {
+    console.error('[Lumen] boot failed:', err);
+  }
 });
