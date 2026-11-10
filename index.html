@@ -150,9 +150,33 @@
 
 <div class="toasts" id="toasts" aria-live="polite"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.4/dist/tesseract.min.js"></script>
+
+<script>
+  window.addEventListener('error', (e) => {
+    console.error('[Lumen] error:', e.message, e.filename, e.lineno);
+    const host = document.getElementById('toasts');
+    if (host) {
+      const t = document.createElement('div');
+      t.className = 'toast err';
+      t.textContent = `ERR: ${e.message}`;
+      host.appendChild(t);
+      setTimeout(() => t.remove(), 5000);
+    }
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    console.error('[Lumen] rejection:', e.reason);
+  });
+  window.addEventListener('DOMContentLoaded', () => {
+    console.log('[Lumen] DOM ready');
+    console.log('[Lumen] pdfjsLib?', typeof window.pdfjsLib);
+    console.log('[Lumen] mammoth?', typeof window.mammoth);
+    console.log('[Lumen] Tesseract?', typeof window.Tesseract);
+    setTimeout(() => console.log('[Lumen] app instance:', window.__lumen), 100);
+  });
+</script>
 <script src="app.js"></script>
 </body>
 </html>
