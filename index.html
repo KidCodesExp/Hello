@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lumen — Word Analyzer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body data-switch-effect="flip" data-touch-effect="ripple">
+
+<div class="ambient" aria-hidden="true">
+  <span class="orb orb-1"></span>
+  <span class="orb orb-2"></span>
+  <span class="orb orb-3"></span>
+</div>
+
+<header class="topbar glass" role="banner">
+  <div class="brand">
+    <span class="brand-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+    </span>
+    <span class="brand-name">Lumen</span>
+    <span class="brand-sub">Word Analyzer</span>
+  </div>
+
+  <nav class="top-actions" aria-label="Primary">
+    <button class="switch" id="themeSwitch" role="switch" aria-checked="true" aria-label="Dark mode">
+      <span class="switch-track"><span class="switch-thumb"></span></span>
+      <span class="switch-label">Dark</span>
+    </button>
+    <button class="switch" id="focusSwitch" role="switch" aria-checked="false" aria-label="Focus mode">
+      <span class="switch-track"><span class="switch-thumb"></span></span>
+      <span class="switch-label">Focus</span>
+    </button>
+    <button class="btn-ghost" id="historyBtn" data-magnetic aria-haspopup="dialog">History</button>
+    <button class="btn-ghost" id="saveBtn" data-magnetic>Save</button>
+  </nav>
+</header>
+
+<main class="layout" id="layout">
+
+  <section class="input-panel glass tilt" data-tilt aria-label="Text input">
+    <div class="panel-head">
+      <h2>Source</h2>
+      <div class="panel-head-actions">
+        <button class="chip" id="sampleBtn" data-magnetic>Sample</button>
+        <button class="chip" id="clearBtn" data-magnetic>Clear</button>
+      </div>
+    </div>
+
+    <textarea id="textInput" class="editor"
+      placeholder="Paste, type, or drop a TXT / DOCX / PDF / JPG / PNG below…"
+      spellcheck="true" aria-label="Text to analyze"></textarea>
+
+    <div class="dropzone" id="dropzone" tabindex="0" role="button"
+         aria-label="Drop or browse files to upload">
+      <div class="dropzone-inner">
+        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
+          <path d="M12 16V4m0 0 4 4m-4-4L8 8M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <p><strong>Drop a file</strong> or <span class="u">browse</span></p>
+        <p class="tiny">TXT · DOCX · PDF · JPG · PNG</p>
+      </div>
+      <input type="file" id="fileInput" accept=".txt,.docx,.pdf,.jpg,.jpeg,.png" hidden />
+    </div>
+
+    <div class="panel-foot">
+      <span class="status" id="status">Ready</span>
+    </div>
+  </section>
+
+  <section class="dashboard" aria-label="Analysis dashboard">
+    <div class="metric-grid">
+      <article class="metric-card glass tilt" data-tilt>
+        <span class="metric-label">Words</span>
+        <span class="metric-value" id="mWords">0</span>
+        <span class="metric-sub" id="mUnique">0 unique</span>
+      </article>
+      <article class="metric-card glass tilt" data-tilt>
+        <span class="metric-label">Characters</span>
+        <span class="metric-value" id="mChars">0</span>
+        <span class="metric-sub" id="mCharsNS">0 without spaces</span>
+      </article>
+      <article class="metric-card glass tilt" data-tilt>
+        <span class="metric-label">Sentences</span>
+        <span class="metric-value" id="mSentences">0</span>
+        <span class="metric-sub" id="mParagraphs">0 paragraphs</span>
+      </article>
+      <article class="metric-card glass tilt" data-tilt>
+        <span class="metric-label">Reading</span>
+        <span class="metric-value" id="mReading">0s</span>
+        <span class="metric-sub" id="mSpeaking">0s speaking</span>
+      </article>
+    </div>
+
+    <div class="metric-row">
+      <article class="metric-card glass tilt wide" data-tilt>
+        <span class="metric-label">Top Keywords</span>
+        <div class="keywords" id="keywords"><span class="empty">—</span></div>
+      </article>
+      <article class="metric-card glass tilt" data-tilt>
+        <span class="metric-label">Sentiment</span>
+        <div class="sentiment">
+          <span class="sentiment-dot" id="sentDot"></span>
+          <span class="metric-value small" id="mSentiment">Neutral</span>
+        </div>
+        <span class="metric-sub" id="sentScore">Score 0</span>
+      </article>
+    </div>
+
+    <article class="metric-card glass tilt full" data-tilt>
+      <span class="metric-label">Readability · Flesch</span>
+      <div class="read-bar"><span class="read-fill" id="readFill"></span></div>
+      <div class="read-meta">
+        <span id="readScore">0</span>
+        <span id="readGrade">Grade —</span>
+      </div>
+    </article>
+  </section>
+
+</main>
+
+<aside class="effects-panel glass" id="effectsPanel" aria-label="Effect selector">
+  <button class="effects-toggle" id="effectsToggle" aria-expanded="false" aria-controls="effectsBody">
+    <span class="fx-dot" aria-hidden="true"></span>
+    <span>Effects</span>
+  </button>
+  <div class="effects-body" id="effectsBody">
+    <h3>Switch</h3>
+    <div class="effect-options" id="switchOptions" role="radiogroup" aria-label="Switch animation"></div>
+    <h3>Touch</h3>
+    <div class="effect-options" id="touchOptions" role="radiogroup" aria-label="Touch animation"></div>
+  </div>
+</aside>
+
+<div class="modal" id="historyModal" role="dialog" aria-modal="true"
+     aria-labelledby="historyTitle" hidden>
+  <div class="modal-card glass">
+    <header class="modal-head">
+      <h2 id="historyTitle">History</h2>
+      <button class="icon-btn" id="historyClose" aria-label="Close history">✕</button>
+    </header>
+    <div class="history-list" id="historyList"></div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@4.0.379/build/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.4/dist/tesseract.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
