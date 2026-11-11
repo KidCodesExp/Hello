@@ -112,11 +112,9 @@ class Analyzer {
     if (w.endsWith('e') && !w.endsWith('le') && n > 1) n--;
     return Math.max(1, n);
   }
-
   static tokens(text) {
     return (text.toLowerCase().match(/[a-z']+/g) || []).filter(Boolean);
   }
-
   static analyze(text) {
     const raw = text || '';
     const chars = raw.length;
@@ -163,7 +161,6 @@ class Analyzer {
       readability: +fkClamped.toFixed(1), grade
     };
   }
-
   static grade(score) {
     if (!score) return 'Grade —';
     if (score >= 90) return 'Very easy · 5th grade';
@@ -174,7 +171,6 @@ class Analyzer {
     if (score >= 30) return 'Difficult · College';
     return 'Very difficult · Graduate';
   }
-
   static fmtTime(sec) {
     if (sec < 60) return `${sec}s`;
     const m = Math.floor(sec / 60), s = sec % 60;
@@ -183,7 +179,7 @@ class Analyzer {
 }
 
 /* =========================================================
-   PARSER — file / OCR
+   PARSER
    ========================================================= */
 class Parser {
   constructor(onProgress) {
@@ -193,7 +189,6 @@ class Parser {
         'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js';
     }
   }
-
   async parse(file) {
     const n = file.name.toLowerCase();
     if (n.endsWith('.txt')) return await file.text();
@@ -202,7 +197,6 @@ class Parser {
     if (/\.(jpg|jpeg|png)$/.test(n)) return await this.ocr(file);
     throw new Error('Unsupported file type');
   }
-
   async pdf(file) {
     if (!window.pdfjsLib) throw new Error('PDF.js not loaded');
     const buf = await file.arrayBuffer();
@@ -216,14 +210,12 @@ class Parser {
     }
     return parts.join('\n\n');
   }
-
   async docx(file) {
     if (!window.mammoth) throw new Error('Mammoth.js not loaded');
     const buf = await file.arrayBuffer();
     const res = await mammoth.extractRawText({ arrayBuffer: buf });
     return res.value || '';
   }
-
   async ocr(file) {
     if (!window.Tesseract) throw new Error('Tesseract.js not loaded');
     const { data } = await Tesseract.recognize(file, 'eng', {
@@ -237,10 +229,10 @@ class Parser {
 }
 
 /* =========================================================
-   TILT
+   TILT — per-card 3D tilt, respects base data-z
    ========================================================= */
 class Tilt {
-  constructor(selector, max = 7) {
+  constructor(selector, max = 8) {
     this.max = max;
     this.enabled = !matchMedia('(pointer: coarse)').matches &&
                    !matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -258,8 +250,9 @@ class Tilt {
     const r = c.getBoundingClientRect();
     const px = (e.clientX - r.left) / r.width - 0.5;
     const py = (e.clientY - r.top) / r.height - 0.5;
+    const baseZ = parseFloat(c.dataset.z || 20);
     c.style.transform =
-      `perspective(1200px) rotateY(${px * this.max}deg) rotateX(${-py * this.max}deg) translateZ(6px)`;
+      `perspective(1400px) rotateY(${px * this.max}deg) rotateX(${-py * this.max}deg) translateZ(${baseZ + 24}px)`;
     c.style.setProperty('--mx', `${(px + 0.5) * 100}%`);
     c.style.setProperty('--my', `${(py + 0.5) * 100}%`);
   }
@@ -274,10 +267,31 @@ class Tilt {
 }
 
 /* =========================================================
+   STAGE PARALLAX — whole deck responds to cursor
+   ========================================================= */
+class StageParallax {
+  constructor(stage, strength = 2) {
+    this.stage = stage;
+    this.strength = strength;
+    this.enabled = !matchMedia('(pointer: coarse)').matches &&
+                   !matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!this.enabled) return;
+    this._move = this._move.bind(this);
+    window.addEventListener('pointermove', this._move);
+  }
+  _move(e) {
+    const px = (e.clientX / window.innerWidth) - 0.5;
+    const py = (e.clientY / window.innerHeight) - 0.5;
+    this.stage.style.transform =
+      `rotateY(${px * this.strength}deg) rotateX(${-py * this.strength}deg)`;
+  }
+}
+
+/* =========================================================
    MAGNETIC
    ========================================================= */
 class Magnetic {
-  constructor(selector, strength = 0.14) {
+  constructor(selector, strength = 0.16) {
     this.strength = strength;
     this.enabled = !matchMedia('(pointer: coarse)').matches;
     if (!this.enabled) return;
@@ -308,7 +322,6 @@ class TouchFx {
     document.addEventListener('pointerdown', this._down);
   }
   setMode(m) { this.mode = m; }
-
   _down(e) {
     const target = e.target.closest('.btn-ghost,.chip,.switch,.icon-btn,.fx-option,.hi-actions button');
     if (!target) return;
@@ -342,17 +355,17 @@ class TouchFx {
     const r = el.getBoundingClientRect();
     const cx = r.left + r.width / 2;
     const cy = r.top + r.height / 2;
-    const n = 16;
+    const n = 18;
     for (let i = 0; i < n; i++) {
       const p = document.createElement('span');
       p.className = 'particle';
       const angle = (Math.PI * 2 * i) / n + Math.random() * 0.4;
-      const dist = 40 + Math.random() * 90;
+      const dist = 50 + Math.random() * 100;
       p.style.left = `${cx}px`;
       p.style.top  = `${cy}px`;
       p.style.setProperty('--dx', `${Math.cos(angle) * dist}px`);
       p.style.setProperty('--dy', `${Math.sin(angle) * dist}px`);
-      p.style.setProperty('--d', `${0.5 + Math.random() * 0.5}s`);
+      p.style.setProperty('--d', `${0.55 + Math.random() * 0.5}s`);
       document.body.appendChild(p);
       p.addEventListener('animationend', () => p.remove(), { once: true });
     }
@@ -369,10 +382,10 @@ class App {
     this.touchFx = new TouchFx();
     this.tilt = null;
     this.magnetic = null;
+    this.parallax = null;
     this.parser = new Parser(msg => this.setStatus(msg, true));
     this.debounceTimer = null;
     this.currentAnalysis = null;
-
     this.$ = (id) => document.getElementById(id);
     this.bind();
   }
@@ -386,6 +399,7 @@ class App {
 
     this.tilt = new Tilt('[data-tilt]');
     this.magnetic = new Magnetic('[data-magnetic]');
+    this.parallax = new StageParallax(this.$('layout'), 2);
 
     this.refresh();
   }
@@ -400,7 +414,6 @@ class App {
     this.$('historyModal').addEventListener('click', (e) => {
       if (e.target.id === 'historyModal') this.closeHistory();
     });
-
     this.$('themeSwitch').addEventListener('click', () => this.toggleTheme());
     this.$('focusSwitch').addEventListener('click', () => this.toggleFocus());
 
@@ -449,7 +462,6 @@ class App {
   savePrefs(extra = {}) {
     Prefs.save({ ...Prefs.load(), ...extra });
   }
-
   toggleTheme() {
     const cur = document.documentElement.dataset.theme;
     const next = cur === 'dark' ? 'light' : 'dark';
@@ -483,7 +495,6 @@ class App {
       { id: 'both',      label: 'Both' },
       { id: 'particles', label: 'Particles' }
     ];
-
     const sw = this.$('switchOptions');
     const cur = document.body.dataset.switchEffect || 'flip';
     switches.forEach(o => {
@@ -500,7 +511,6 @@ class App {
       });
       sw.appendChild(b);
     });
-
     const to = this.$('touchOptions');
     const curT = document.body.dataset.touchEffect || 'ripple';
     touches.forEach(o => {
@@ -543,9 +553,8 @@ class App {
 
     const kw = this.$('keywords');
     kw.innerHTML = '';
-    if (!a.keywords.length) {
-      kw.innerHTML = '<span class="empty">—</span>';
-    } else {
+    if (!a.keywords.length) kw.innerHTML = '<span class="empty">—</span>';
+    else {
       for (const k of a.keywords) {
         const el = document.createElement('span');
         el.className = 'kw';
@@ -570,7 +579,6 @@ class App {
     this.refresh();
     this.setStatus('Cleared');
   }
-
   loadSample() {
     this.$('textInput').value =
 `Design is not decoration. It is the discipline of removing everything that does not serve the user, then making what remains feel inevitable. A good interface is quiet: it does not shout, it does not ask for attention it has not earned. It responds, it yields, it clarifies.
@@ -581,7 +589,6 @@ Clarity is difficult. Simplicity is harder. Anyone can add, only a few know what
     this.refresh();
     this.setStatus('Sample loaded');
   }
-
   setStatus(msg, busy = false) {
     const el = this.$('status');
     el.textContent = msg;
