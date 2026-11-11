@@ -22,15 +22,16 @@ function formatBytes(bytes) {
 }
 
 function formatNumber(n) {
-  return n.toLocaleString('en-US');
+  return Number(n || 0).toLocaleString('en-US');
 }
 
 function formatDuration(seconds) {
-  if (!seconds || seconds < 1) return '0s';
-  if (seconds < 60) return Math.ceil(seconds) + 's';
-  const m = Math.floor(seconds / 60);
-  const s = Math.round(seconds % 60);
-  return s > 0 ? `${m}m ${s}s` : `${m}m`;
+  const s = Number(seconds || 0);
+  if (!s || s < 1) return '0s';
+  if (s < 60) return Math.ceil(s) + 's';
+  const m = Math.floor(s / 60);
+  const sec = Math.round(s % 60);
+  return sec > 0 ? `${m}m ${sec}s` : `${m}m`;
 }
 
 function debounce(fn, delay = 200) {
@@ -41,16 +42,51 @@ function debounce(fn, delay = 200) {
   };
 }
 
+/**
+ * Robust blob download.
+ * Tries Blob + anchor click, dispatches a real MouseEvent (more reliable
+ * than .click() in some engines), falls back to data-URL anchor if Blob fails.
+ */
 function downloadBlob(content, filename, mime = 'text/plain') {
-  const blob = new Blob([content], { type: mime + ';charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const fullMime = mime + ';charset=utf-8';
+  try {
+    const blob = new Blob([content], { type: fullMime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.dispatchEvent(new MouseEvent('click', {
+      bubbles: true, cancelable: true, view: window,
+    }));
+    setTimeout(() => {
+      try { document.body.removeChild(a); } catch {}
+      URL.revokeObjectURL(url);
+    }, 200);
+    return true;
+  } catch (err) {
+    // Fallback: data URL
+    try {
+      const dataUrl = 'data:' + fullMime + ',' + encodeURIComponent(content);
+      const a = document.createElement('a');
+      a.href = dataUrl;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.dispatchEvent(new MouseEvent('click', {
+        bubbles: true, cancelable: true, view: window,
+      }));
+      setTimeout(() => {
+        try { document.body.removeChild(a); } catch {}
+      }, 200);
+      return true;
+    } catch (err2) {
+      console.error('[downloadBlob]', err, err2);
+      return false;
+    }
+  }
 }
 
 async function copyToClipboard(text) {
@@ -59,7 +95,6 @@ async function copyToClipboard(text) {
     await navigator.clipboard.writeText(text);
     return true;
   } catch {
-    // Fallback
     const ta = document.createElement('textarea');
     ta.value = text;
     ta.style.position = 'fixed';
@@ -86,8 +121,77 @@ function toast(message, type = 'info', duration = 2600) {
   }, duration);
 }
 
-// Shared in-memory app state (session only)
+/* ============ Theme ============ */
+const THEME_KEY = 'wordsanalyser-theme';
+
+function getStoredTheme() {
+  try { return localStorage.getItem(THEME_KEY); } catch { return null; }
+}
+function setStoredTheme(theme) {
+  try { localStorage.setItem(THEME_KEY, theme); } catch {}
+}
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  // Update meta theme-color
+  const meta = document.querySelector('meta[name="theme-color"]:not([media])') ||
+               document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', theme === 'light' ? '#ffffff' : '#08080a');
+}
+function initTheme() {
+  const stored = getStoredTheme();
+  let initial = stored;
+  if (!initial) {
+    initial = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  applyTheme(initial);
+  return initial;
+}
+function toggleTheme() {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  applyTheme(next);
+  setStoredTheme(next);
+  return next;
+}
+
+/* ============ Ripple / Touch Feedback ============ */
+function attachRipples(root = document) {
+  const selector = [
+    '.btn',
+    '.nav-btn',
+    '.quick-card',
+    '.tool-run',
+    '.file-remove',
+    '.back-to-top',
+    '.theme-toggle',
+    '.menu-toggle',
+    '.footer-link',
+    '.dropdown-menu button',
+  ].join(', ');
+
+  root.querySelectorAll(selector).forEach(el => {
+    if (el.dataset.ripple === 'on') return;
+    el.dataset.ripple = 'on';
+    el.addEventListener('pointerdown', (e) => {
+      // Only left button / touch
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      const rect = el.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height);
+      const x = (e.clientX || rect.left + rect.width / 2) - rect.left - size / 2;
+      const y = (e.clientY || rect.top + rect.height / 2) - rect.top - size / 2;
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = x + 'px';
+      ripple.style.top = y + 'px';
+      el.appendChild(ripple);
+      setTimeout(() => ripple.remove(), 620);
+    });
+  });
+}
+
+/* ============ App state ============ */
 window.AppState = {
-  files: [],       // { id, name, size, ext, text, status }
-  analyses: [],    // { id, name, timestamp, metrics, preview }
+  files: [],
+  analyses: [],
 };
