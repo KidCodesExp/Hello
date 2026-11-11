@@ -83,11 +83,10 @@
   // Obfuscated Email & Feedback Form AJAX Submission
   // ============================================================
   
-  // Hidden email (ih5z@proton.me) encoded in Base64 to prevent scraping
-  const _b64 = "aWg1ekBwcm90b24ubWU=";
+  // Hidden email (wordsanalyser@proton.me) encoded in Base64 to prevent scraping
+  const _b64 = "d29yZHNhbmFseXNlckBwcm90b24ubWU=";
   const hiddenEmail = atob(_b64);
 
-  // Safely inject the email into the contact card
   const emailLink = document.getElementById('obfuscated-email-link');
   if (emailLink) {
     emailLink.textContent = hiddenEmail;
@@ -118,13 +117,11 @@
       })
       .then(response => response.json())
       .then(data => {
-        // FormSubmit returns success:"true" or success:"false"
         if (String(data.success) === 'true') {
           toast('Message sent! Check your inbox.', 'success');
           feedbackForm.reset();
         } else {
-          // If it's the first time, it will require activation
-          toast('Check your inbox/spam to activate the form!', 'info', 6000);
+          toast('Check inbox/spam to activate the form!', 'info', 6000);
           console.warn('[WordsAnalyser] FormSubmit response:', data);
         }
       })
