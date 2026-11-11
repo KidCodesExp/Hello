@@ -4,7 +4,7 @@
 (function () {
   'use strict';
 
-  const VERSION = '3.1.0';
+  const VERSION = '3.2.0';
 
   window.addEventListener('error', function (e) {
     const file = e.filename || '';
@@ -83,11 +83,11 @@
   // Obfuscated Email & Feedback Form AJAX Submission
   // ============================================================
   
-  // Hidden email (dr.unread@aol.com) encoded in Base64 to prevent scraping
-  const _b64 = "ZHIudW5yZWFkQGFvbC5jb20=";
+  // Hidden email (ih5z@proton.me) encoded in Base64 to prevent scraping
+  const _b64 = "aWg1ekBwcm90b24ubWU=";
   const hiddenEmail = atob(_b64);
 
-  // Also safely inject the email into the contact card on the page
+  // Safely inject the email into the contact card
   const emailLink = document.getElementById('obfuscated-email-link');
   if (emailLink) {
     emailLink.textContent = hiddenEmail;
@@ -107,8 +107,6 @@
       submitBtn.style.opacity = '0.7';
 
       const formData = new FormData(feedbackForm);
-      
-      // Build the FormSubmit endpoint dynamically
       const endpoint = "https://formsubmit.co/ajax/" + hiddenEmail;
 
       fetch(endpoint, {
@@ -120,16 +118,19 @@
       })
       .then(response => response.json())
       .then(data => {
-        if (data.success) {
-          toast('Feedback sent successfully!', 'success');
+        // FormSubmit returns success:"true" or success:"false"
+        if (String(data.success) === 'true') {
+          toast('Message sent! Check your inbox.', 'success');
           feedbackForm.reset();
         } else {
-          toast('Something went wrong. Please try again.', 'error');
+          // If it's the first time, it will require activation
+          toast('Check your inbox/spam to activate the form!', 'info', 6000);
+          console.warn('[WordsAnalyser] FormSubmit response:', data);
         }
       })
       .catch(error => {
-        console.error('Error submitting form:', error);
-        toast('Failed to send. Check your connection.', 'error');
+        console.error('[WordsAnalyser] Form submission error:', error);
+        toast('Failed to send. Check console for details.', 'error');
       })
       .finally(() => {
         submitBtn.textContent = originalText;
