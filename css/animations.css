@@ -23,8 +23,8 @@
   to { opacity: 0; transform: translateX(24px); }
 }
 @keyframes rippleAnim {
-  from { transform: scale(0); opacity: 0.22; }
-  to { transform: scale(2.6); opacity: 0; }
+  from { transform: scale(0); opacity: 0.32; }
+  to   { transform: scale(2.8); opacity: 0; }
 }
 
 /* Respect reduced motion */
