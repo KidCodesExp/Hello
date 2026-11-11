@@ -22,3 +22,18 @@
   from { opacity: 1; transform: translateX(0); }
   to { opacity: 0; transform: translateX(24px); }
 }
+@keyframes rippleAnim {
+  from { transform: scale(0); opacity: 0.22; }
+  to { transform: scale(2.6); opacity: 0; }
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .ripple { display: none; }
+}
