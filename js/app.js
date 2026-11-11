@@ -1,10 +1,10 @@
 // language: JavaScript, file: app.js
-// Bootstrap. Version logged, global error handler, self-verification.
+// Bootstrap. Version logged, global error handler, hidden email AJAX submission.
 
 (function () {
   'use strict';
 
-  const VERSION = '3.0.0';
+  const VERSION = '3.1.0';
 
   window.addEventListener('error', function (e) {
     const file = e.filename || '';
@@ -80,8 +80,20 @@
   });
 
   // ============================================================
-  // Feedback Form AJAX Submission (No Redirect)
+  // Obfuscated Email & Feedback Form AJAX Submission
   // ============================================================
+  
+  // Hidden email (dr.unread@aol.com) encoded in Base64 to prevent scraping
+  const _b64 = "ZHIudW5yZWFkQGFvbC5jb20=";
+  const hiddenEmail = atob(_b64);
+
+  // Also safely inject the email into the contact card on the page
+  const emailLink = document.getElementById('obfuscated-email-link');
+  if (emailLink) {
+    emailLink.textContent = hiddenEmail;
+    emailLink.href = "mailto:" + hiddenEmail;
+  }
+
   const feedbackForm = document.getElementById('feedback-form');
   const submitBtn = document.getElementById('submit-btn');
 
@@ -95,8 +107,11 @@
       submitBtn.style.opacity = '0.7';
 
       const formData = new FormData(feedbackForm);
+      
+      // Build the FormSubmit endpoint dynamically
+      const endpoint = "https://formsubmit.co/ajax/" + hiddenEmail;
 
-      fetch(feedbackForm.action, {
+      fetch(endpoint, {
         method: 'POST',
         body: formData,
         headers: {
