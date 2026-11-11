@@ -111,6 +111,7 @@
               <button type="button" data-export="txt" role="menuitem">TXT</button>
               <button type="button" data-export="csv" role="menuitem">CSV</button>
               <button type="button" data-export="json" role="menuitem">JSON</button>
+              <button type="button" data-export="md" role="menuitem">Markdown</button>
             </div>
           </div>
         </div>
@@ -140,13 +141,13 @@
     <section class="quick-tools" aria-labelledby="quick-tools-title">
       <div class="section-head">
         <h2 class="section-title" id="quick-tools-title">Quick tools</h2>
-        <span class="hint">14+ working utilities</span>
+        <span class="hint">16+ working utilities</span>
       </div>
       <div class="quick-grid">
         <button class="quick-card" data-goto="tools" data-tool="counter"><span class="quick-title">Live Counter</span><span class="quick-desc">Words, characters, sentences, paragraphs</span></button>
         <button class="quick-card" data-goto="tools" data-tool="case"><span class="quick-title">Case Converter</span><span class="quick-desc">Upper · Lower · Title · Sentence</span></button>
-        <button class="quick-card" data-goto="tools" data-tool="clean"><span class="quick-title">Text Cleaning</span><span class="quick-desc">Strip HTML, URLs, and noise</span></button>
-        <button class="quick-card" data-goto="tools" data-tool="compare"><span class="quick-title">Text Comparison</span><span class="quick-desc">Word-level differences between two texts</span></button>
+        <button class="quick-card" data-goto="tools" data-tool="readability"><span class="quick-title">Readability</span><span class="quick-desc">Flesch-Kincaid grade level</span></button>
+        <button class="quick-card" data-goto="tools" data-tool="sentiment"><span class="quick-title">Sentiment</span><span class="quick-desc">Detect positive or negative tone</span></button>
       </div>
     </section>
 
@@ -175,6 +176,14 @@
       <button class="launcher-card" data-tool="reading">
         <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <span class="launcher-title">Reading Time</span>
+      </button>
+      <button class="launcher-card" data-tool="readability">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="launcher-title">Readability</span>
+      </button>
+      <button class="launcher-card" data-tool="sentiment">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="launcher-title">Sentiment</span>
       </button>
       <button class="launcher-card" data-tool="case">
         <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20l6-16 6 16M6.5 14h7M18 20l4-10 4 10m-6.5-4h5" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -226,7 +235,7 @@
       </button>
     </div>
 
-    <!-- HIDDEN TOOL PANELS (Injected into modal dynamically) -->
+    <!-- HIDDEN TOOL PANELS -->
     <div id="tool-panels" style="display:none;">
       <article class="tool-card" data-tool="counter">
         <header class="tool-head"><h3>Live Counter</h3><p>Auto-updates as you type</p></header>
@@ -247,6 +256,24 @@
           <div><span class="mini-label">Speak</span><span class="mini-value" data-mini="reading-speak">0s</span></div>
           <div><span class="mini-label">Words</span><span class="mini-value" data-mini="reading-words">0</span></div>
         </div>
+      </article>
+
+      <article class="tool-card" data-tool="readability">
+        <header class="tool-head"><h3>Readability Checker</h3><p>Flesch-Kincaid Reading Ease</p></header>
+        <textarea class="tool-input" placeholder="Enter text..."></textarea>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Check Score</button>
+        </div>
+        <div class="tool-output" data-empty="true">Readability score appears here</div>
+      </article>
+
+      <article class="tool-card" data-tool="sentiment">
+        <header class="tool-head"><h3>Sentiment Analysis</h3><p>Check overall tone (Positive/Negative)</p></header>
+        <textarea class="tool-input" placeholder="Enter text..."></textarea>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Analyse Tone</button>
+        </div>
+        <div class="tool-output" data-empty="true">Sentiment appears here</div>
       </article>
 
       <article class="tool-card" data-tool="case">
@@ -417,7 +444,6 @@
       <div class="contact-card">
         <h3>Email Us</h3>
         <p>For direct questions or business inquiries.</p>
-        <!-- Use JS to inject the obfuscated email here to prevent scraping -->
         <a href="#" id="obfuscated-email-link" class="contact-link">Loading email...</a>
       </div>
       <div class="contact-card">
@@ -427,13 +453,12 @@
       </div>
     </div>
 
-<div class="contact-form-wrap">
+    <div class="contact-form-wrap">
       <div class="hero-sm" style="margin-bottom: 24px;">
         <h2 class="section-title">Send Feedback</h2>
         <p class="hint" style="margin-top: 4px;">Messages go straight to our team.</p>
       </div>
       
-      <!-- NO action attribute here - JS builds the hidden endpoint -->
       <form id="feedback-form" class="contact-form">
         <input type="hidden" name="_template" value="table">
         <input type="hidden" name="_subject" value="New WordsAnalyser Feedback">
@@ -465,7 +490,8 @@
         </button>
       </form>
     </div>
-    
+  </section>
+
   <!-- PRIVACY TAB -->
   <section class="tab-panel" id="tab-privacy" role="tabpanel" aria-labelledby="tab-privacy-label">
     <div class="hero hero-sm">
