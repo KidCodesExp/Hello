@@ -1,11 +1,20 @@
 // language: JavaScript, file: tools.js
-// All 14 text utilities
+// All 14 text utilities. Word extraction goes through WordHelpers — no
+// \p{} literals anywhere in this file.
 
 (function () {
-  const grid = $('#tools-grid');
-  if (!grid) return;
+  'use strict';
 
-  // --- Helpers ---
+  const grid = document.getElementById('tools-grid');
+  if (!grid) return;
+  if (!window.WordHelpers) {
+    console.error('[WordsAnalyser] tools.js: WordHelpers not loaded');
+    return;
+  }
+
+  const WH = window.WordHelpers;
+  const wordsOf = function (t) { return WH.extractWords(t.toLowerCase()); };
+
   const getCard = el => el.closest('.tool-card');
   const getInput = card => card.querySelector('.tool-input:not([data-field])') || card.querySelector('.tool-input');
   const getOutput = card => card.querySelector('.tool-output');
@@ -16,17 +25,18 @@
     out.dataset.empty = 'false';
   };
 
-  // --- Live: counters + reading time ---
+  // ============================================================
+  // Live inputs
+  // ============================================================
   function bindLiveInputs() {
-    // Counter
     const counterCard = grid.querySelector('[data-tool="counter"]');
-    if (counterCard) {
+    if (counterCard && window.Analyzer) {
       const ta = counterCard.querySelector('.tool-input');
       const words = counterCard.querySelector('[data-mini="counter-words"]');
       const chars = counterCard.querySelector('[data-mini="counter-chars"]');
       const sentences = counterCard.querySelector('[data-mini="counter-sentences"]');
       const paragraphs = counterCard.querySelector('[data-mini="counter-paragraphs"]');
-      const update = () => {
+      const update = function () {
         const m = window.Analyzer.analyze(ta.value);
         words.textContent = formatNumber(m.words);
         chars.textContent = formatNumber(m.chars);
@@ -37,14 +47,13 @@
       update();
     }
 
-    // Reading time
     const readingCard = grid.querySelector('[data-tool="reading"]');
-    if (readingCard) {
+    if (readingCard && window.Analyzer) {
       const ta = readingCard.querySelector('.tool-input');
       const read = readingCard.querySelector('[data-mini="reading-read"]');
       const speak = readingCard.querySelector('[data-mini="reading-speak"]');
       const words = readingCard.querySelector('[data-mini="reading-words"]');
-      const update = () => {
+      const update = function () {
         const m = window.Analyzer.analyze(ta.value);
         read.textContent = formatDuration(m.readingTime);
         speak.textContent = formatDuration(m.speakingTime);
@@ -55,24 +64,21 @@
     }
   }
 
-  // --- Tool runners ---
+  // ============================================================
+  // Tool runners
+  // ============================================================
   const runners = {
     case(card, action) {
       const input = getInput(card).value;
       let out = '';
       if (action === 'upper') out = input.toUpperCase();
       if (action === 'lower') out = input.toLowerCase();
-      if (action === 'title') {
-        out = input.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-      }
-      if (action === 'sentence') {
-        out = input.toLowerCase().replace(/(^\s*\w|[.!?]\s*\w)/g, c => c.toUpperCase());
-      }
+      if (action === 'title') out = input.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+      if (action === 'sentence') out = input.toLowerCase().replace(/(^\s*\w|[.!?]\s*\w)/g, c => c.toUpperCase());
       setOutput(card, out || '(empty)');
     },
     spaces(card) {
-      const input = getInput(card).value;
-      const out = input
+      const out = getInput(card).value
         .split('\n')
         .map(line => line.replace(/[ \t]+/g, ' ').trim())
         .join('\n')
@@ -80,9 +86,8 @@
       setOutput(card, out || '(empty)');
     },
     duplines(card) {
-      const input = getInput(card).value;
       const seen = new Set();
-      const out = input.split('\n').filter(l => {
+      const out = getInput(card).value.split('\n').filter(l => {
         const key = l.trim();
         if (seen.has(key)) return false;
         seen.add(key);
@@ -106,11 +111,7 @@
       if (!find) return setOutput(card, '(enter text to find)');
       let out;
       try {
-        if (useRegex) {
-          out = input.replace(new RegExp(find, 'g'), replace);
-        } else {
-          out = input.split(find).join(replace);
-        }
+        out = useRegex ? input.replace(new RegExp(find, 'g'), replace) : input.split(find).join(replace);
       } catch (err) {
         return setOutput(card, 'Regex error: ' + err.message);
       }
@@ -129,85 +130,91 @@
     },
     clean(card) {
       let out = getInput(card).value;
-      const f = k => card.querySelector(`[data-field="${k}"]`).checked;
+      const f = k => card.querySelector('[data-field="' + k + '"]').checked;
       if (f('html')) out = out.replace(/<[^>]*>/g, '');
       if (f('urls')) out = out.replace(/https?:\/\/\S+/g, '');
       if (f('emails')) out = out.replace(/[\w.+-]+@[\w.-]+\.\w+/g, '');
       if (f('numbers')) out = out.replace(/\d+/g, '');
-      if (f('special')) out = out.replace(/[^\p{L}\p{N}\s.,!?;:'"()\-]/gu, '');
+      if (f('special')) {
+        // Build special-char stripper safely — no \p{} literal
+        try {
+          const re = new RegExp('[^\\p{L}\\p{N}\\s.,!?;:\'"()\\-]', 'gu');
+          out = out.replace(re, '');
+        } catch {
+          out = out.replace(/[^A-Za-z0-9\s.,!?;:'"()\-]/g, '');
+        }
+      }
       if (f('ws')) out = out.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
       setOutput(card, out || '(empty)');
     },
     compare(card) {
       const a = card.querySelector('[data-field="a"]').value;
       const b = card.querySelector('[data-field="b"]').value;
-      const wordsOf = t => (t.toLowerCase().match(/\b[\p{L}\p{N}'’\-]+\b/gu) || []);
       const setA = new Set(wordsOf(a));
       const setB = new Set(wordsOf(b));
       const onlyA = [...setA].filter(w => !setB.has(w)).sort();
       const onlyB = [...setB].filter(w => !setA.has(w)).sort();
       const both = [...setA].filter(w => setB.has(w)).sort();
-      const lines = [
-        `Only in A (${onlyA.length}): ${onlyA.slice(0, 30).join(', ') || '—'}`,
+      setOutput(card, [
+        'Only in A (' + onlyA.length + '): ' + (onlyA.slice(0, 30).join(', ') || '—'),
         '',
-        `Only in B (${onlyB.length}): ${onlyB.slice(0, 30).join(', ') || '—'}`,
+        'Only in B (' + onlyB.length + '): ' + (onlyB.slice(0, 30).join(', ') || '—'),
         '',
-        `In both (${both.length}): ${both.slice(0, 30).join(', ') || '—'}`,
-      ];
-      setOutput(card, lines.join('\n'));
+        'In both (' + both.length + '): ' + (both.slice(0, 30).join(', ') || '—'),
+      ].join('\n'));
     },
     dupwords(card) {
-      const words = (getInput(card).value.toLowerCase().match(/\b[\p{L}\p{N}'’\-]+\b/gu) || []);
+      const words = wordsOf(getInput(card).value);
       const freq = {};
-      words.forEach(w => freq[w] = (freq[w] || 0) + 1);
-      const dups = Object.entries(freq).filter(([_, c]) => c > 1).sort((a, b) => b[1] - a[1]);
+      words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
+      const dups = Object.entries(freq).filter(e => e[1] > 1).sort((a, b) => b[1] - a[1]);
       if (!dups.length) return setOutput(card, 'No duplicate words found.');
-      setOutput(card, dups.map(([w, c]) => `${w} — ${c}×`).join('\n'));
+      setOutput(card, dups.map(e => e[0] + ' — ' + e[1] + '×').join('\n'));
     },
     density(card) {
       const text = getInput(card).value;
       const keyword = (card.querySelector('[data-field="keyword"]').value || '').trim().toLowerCase();
       if (!keyword) return setOutput(card, '(enter a keyword)');
-      const words = (text.toLowerCase().match(/\b[\p{L}\p{N}'’\-]+\b/gu) || []);
+      const words = wordsOf(text);
       if (!words.length) return setOutput(card, 'No words to analyse.');
       const hits = words.filter(w => w === keyword).length;
       const density = (hits / words.length * 100).toFixed(2);
       setOutput(card,
-        `Keyword: ${keyword}\n` +
-        `Occurrences: ${hits}\n` +
-        `Total words: ${words.length}\n` +
-        `Density: ${density}%`
+        'Keyword: ' + keyword + '\n' +
+        'Occurrences: ' + hits + '\n' +
+        'Total words: ' + words.length + '\n' +
+        'Density: ' + density + '%'
       );
     },
     mostused(card) {
-      const words = (getInput(card).value.toLowerCase().match(/\b[\p{L}\p{N}'’\-]+\b/gu) || []);
+      const words = wordsOf(getInput(card).value);
       if (!words.length) return setOutput(card, '(empty)');
       const freq = {};
-      words.forEach(w => freq[w] = (freq[w] || 0) + 1);
+      words.forEach(w => { freq[w] = (freq[w] || 0) + 1; });
       const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 20);
-      setOutput(card, sorted.map(([w, c], i) => `${String(i + 1).padStart(2)}. ${w} — ${c}×`).join('\n'));
+      setOutput(card, sorted.map((e, i) => (i + 1) + '. ' + e[0] + ' — ' + e[1] + '×').join('\n'));
     },
     statistics(card) {
+      if (!window.Analyzer) return setOutput(card, 'Analyzer not ready.');
       const m = window.Analyzer.analyze(getInput(card).value);
       setOutput(card, [
-        `Words: ${formatNumber(m.words)}`,
-        `Characters: ${formatNumber(m.chars)}`,
-        `Characters (no spaces): ${formatNumber(m.charsNoSpaces)}`,
-        `Sentences: ${formatNumber(m.sentences)}`,
-        `Paragraphs: ${formatNumber(m.paragraphs)}`,
-        `Avg word length: ${m.avgWordLen}`,
-        `Avg sentence length: ${m.avgSentenceLen}`,
-        `Reading time: ${formatDuration(m.readingTime)}`,
-        `Speaking time: ${formatDuration(m.speakingTime)}`,
-        `Unique words: ${formatNumber(m.uniqueWords)}`,
-        `Longest word: ${m.longestWord}`,
-        `Shortest word: ${m.shortestWord}`,
+        'Words: ' + formatNumber(m.words),
+        'Characters: ' + formatNumber(m.chars),
+        'Characters (no spaces): ' + formatNumber(m.charsNoSpaces),
+        'Sentences: ' + formatNumber(m.sentences),
+        'Paragraphs: ' + formatNumber(m.paragraphs),
+        'Avg word length: ' + m.avgWordLen,
+        'Avg sentence length: ' + m.avgSentenceLen,
+        'Reading time: ' + formatDuration(m.readingTime),
+        'Speaking time: ' + formatDuration(m.speakingTime),
+        'Unique words: ' + formatNumber(m.uniqueWords),
+        'Longest word: ' + m.longestWord,
+        'Shortest word: ' + m.shortestWord,
       ].join('\n'));
     },
   };
 
-  // --- Event delegation ---
-  grid.addEventListener('click', e => {
+  grid.addEventListener('click', function (e) {
     const runBtn = e.target.closest('.tool-run');
     if (runBtn) {
       const card = getCard(runBtn);
@@ -231,6 +238,6 @@
   });
 
   bindLiveInputs();
-
+  console.log('[WordsAnalyser] tools.js loaded — 14 tools wired');
   window.Tools = { runners };
 })();
