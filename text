@@ -1,0 +1,22 @@
+WordsAnalyser/
+│
+├── index.html                      ● rewritten (theme toggle, paste-live hint, type=button guards)
+├── README.md                       ○ unchanged
+│
+├── assets/
+│   ├── logo.svg                    ○ unchanged
+│   └── favicon.svg                 ○ unchanged
+│
+├── css/
+│   ├── style.css                   ● rewritten (CSS-variable theme, ripple, touch states)
+│   ├── animations.css              ● rewritten (ripple keyframes, reduced-motion guard)
+│   └── responsive.css              ● rewritten (touch-pointer rules, safe-area insets)
+│
+└── js/
+    ├── utilities.js                ● rewritten (robust downloadBlob, theme, attachRipples)
+    ├── navigation.js               ○ unchanged
+    ├── uploader.js                 ○ unchanged
+    ├── analyzer.js                 ● rewritten (regex fallback, init-on-load, export guards)
+    ├── statistics.js               ○ unchanged
+    ├── tools.js                    ○ unchanged
+    └── app.js                      ● rewritten (theme init, ripple wiring, loader safety net)
