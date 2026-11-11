@@ -1,11 +1,9 @@
 // language: JavaScript, file: js/tools.js
-// All 14 text utilities. Upgraded Find & Replace with Match Case, Whole Word, and Regex.
-
 (function () {
   'use strict';
 
-  const grid = document.getElementById('tools-grid');
-  if (!grid) return;
+  const panelsContainer = document.getElementById('tool-panels');
+  if (!panelsContainer) return;
   if (!window.WordHelpers) {
     console.error('[WordsAnalyser] tools.js: WordHelpers not loaded');
     return;
@@ -26,10 +24,137 @@
   };
 
   // ============================================================
+  // Inject Upload Button into every tool
+  // ============================================================
+  function injectUploadButtons() {
+    const cards = panelsContainer.querySelectorAll('.tool-card');
+    cards.forEach(card => {
+      if (card.querySelector('.tool-upload-wrap')) return;
+      
+      const uploadWrap = document.createElement('div');
+      uploadWrap.className = 'tool-upload-wrap';
+      uploadWrap.innerHTML = `
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer;">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Upload file
+          <input type="file" hidden accept=".txt,.md,.csv,.json,.xml,.html,.css,.js,.rtf,.log,.pdf,.docx">
+        </label>
+      `;
+      
+      const firstInput = card.querySelector('.tool-input, .field-row');
+      if (firstInput) {
+        firstInput.parentNode.insertBefore(uploadWrap, firstInput);
+      } else {
+        card.appendChild(uploadWrap);
+      }
+      
+      const fileInput = uploadWrap.querySelector('input');
+      fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          let text = '';
+          if (file.name.endsWith('.pdf')) {
+            if (window.pdfjsLib) {
+               pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+               const buf = await file.arrayBuffer();
+               const pdf = await pdfjsLib.getDocument({data: buf}).promise;
+               for (let i=1; i<=pdf.numPages; i++) {
+                 const page = await pdf.getPage(i);
+                 const content = await page.getTextContent();
+                 text += content.items.map(it => it.str).join(' ') + '\n';
+               }
+            } else throw new Error('PDF parser not loaded');
+          } else if (file.name.endsWith('.docx')) {
+             if (window.mammoth) {
+               const buf = await file.arrayBuffer();
+               const res = await mammoth.extractRawText({arrayBuffer: buf});
+               text = res.value;
+             } else throw new Error('DOCX parser not loaded');
+          } else {
+            text = await new Promise((res, rej) => {
+              const reader = new FileReader();
+              reader.onload = () => res(reader.result);
+              reader.onerror = rej;
+              reader.readAsText(file);
+            });
+          }
+          
+          const ta = card.querySelector('.tool-input:not([data-field])') || card.querySelector('.tool-input');
+          if (ta) {
+            ta.value = text;
+            ta.dispatchEvent(new Event('input', { bubbles: true }));
+            toast('File loaded into tool', 'success');
+          } else {
+            const fieldA = card.querySelector('[data-field="a"]');
+            if (fieldA) {
+              fieldA.value = text;
+              toast('File loaded into Text A', 'success');
+            }
+          }
+        } catch(err) {
+          toast('Failed to read file: ' + err.message, 'error');
+        }
+        fileInput.value = '';
+      });
+    });
+  }
+
+  // ============================================================
+  // Modal Logic
+  // ============================================================
+  const modal = document.getElementById('tool-modal');
+  const modalBody = document.getElementById('tool-modal-body');
+  const modalTitle = document.getElementById('tool-modal-title');
+  const modalClose = document.getElementById('tool-modal-close');
+  const modalBackdrop = document.getElementById('tool-modal-backdrop');
+  let activeCard = null;
+
+  function openTool(toolId, title) {
+    const card = panelsContainer.querySelector(`.tool-card[data-tool="${toolId}"]`);
+    if (!card) return;
+    
+    if (activeCard) {
+      panelsContainer.appendChild(activeCard); // return old card
+    }
+    
+    activeCard = card;
+    modalBody.appendChild(card);
+    card.style.display = 'flex';
+    
+    modalTitle.textContent = title;
+    modal.classList.add('open');
+    document.body.classList.add('no-scroll');
+  }
+
+  function closeModal() {
+    if (activeCard) {
+      panelsContainer.appendChild(activeCard);
+      activeCard = null;
+    }
+    modal.classList.remove('open');
+    document.body.classList.remove('no-scroll');
+  }
+
+  if (modalClose) modalClose.addEventListener('click', closeModal);
+  if (modalBackdrop) modalBackdrop.addEventListener('click', closeModal);
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && modal.classList.contains('open')) closeModal();
+  });
+
+  document.querySelectorAll('.launcher-card').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const toolId = btn.dataset.tool;
+      const title = btn.querySelector('.launcher-title').textContent;
+      openTool(toolId, title);
+    });
+  });
+
+  // ============================================================
   // Live inputs
   // ============================================================
   function bindLiveInputs() {
-    const counterCard = grid.querySelector('[data-tool="counter"]');
+    const counterCard = panelsContainer.querySelector('[data-tool="counter"]');
     if (counterCard && window.Analyzer) {
       const ta = counterCard.querySelector('.tool-input');
       const words = counterCard.querySelector('[data-mini="counter-words"]');
@@ -48,7 +173,7 @@
       update();
     }
 
-    const readingCard = grid.querySelector('[data-tool="reading"]');
+    const readingCard = panelsContainer.querySelector('[data-tool="reading"]');
     if (readingCard && window.Analyzer) {
       const ta = readingCard.querySelector('.tool-input');
       const read = readingCard.querySelector('[data-mini="reading-read"]');
@@ -67,7 +192,7 @@
   }
 
   // ============================================================
-  // Tool runners
+  // Runners
   // ============================================================
   const runners = {
     case(card, action) {
@@ -79,27 +204,19 @@
       if (action === 'sentence') out = input.toLowerCase().replace(/(^\s*\w|[.!?]\s*\w)/g, c => c.toUpperCase());
       setOutput(card, out || '(empty)');
     },
-    
     spaces(card) {
-      const out = getInput(card).value
-        .split('\n')
-        .map(line => line.replace(/[ \t]+/g, ' ').trim())
-        .join('\n')
-        .replace(/\n{3,}/g, '\n\n');
+      const out = getInput(card).value.split('\n').map(line => line.replace(/[ \t]+/g, ' ').trim()).join('\n').replace(/\n{3,}/g, '\n\n');
       setOutput(card, out || '(empty)');
     },
-    
     duplines(card) {
       const seen = new Set();
       const out = getInput(card).value.split('\n').filter(l => {
         const key = l.trim();
         if (seen.has(key)) return false;
-        seen.add(key);
-        return true;
+        seen.add(key); return true;
       }).join('\n');
       setOutput(card, out || '(empty)');
     },
-    
     reverse(card, action) {
       const input = getInput(card).value;
       let out = '';
@@ -108,27 +225,20 @@
       if (action === 'lines') out = input.split('\n').reverse().join('\n');
       setOutput(card, out || '(empty)');
     },
-    
     findreplace(card) {
       const input = getInput(card).value;
       const find = card.querySelector('[data-field="find"]').value;
       const replace = card.querySelector('[data-field="replace"]').value;
-      
-      // Get checkbox states
       const matchCase = card.querySelector('[data-field="matchcase"]').checked;
       const wholeWord = card.querySelector('[data-field="wholeword"]').checked;
       const useRegex = card.querySelector('[data-field="regex"]').checked;
 
       if (!find) return setOutput(card, '(enter text to find)');
-
       let out;
       try {
         if (useRegex) {
-          // Regex mode
           out = input.replace(new RegExp(find, matchCase ? 'g' : 'gi'), replace);
         } else {
-          // Standard text mode
-          // Escape any regex special characters in the search string
           let escaped = find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
           let pattern = wholeWord ? '\\b' + escaped + '\\b' : escaped;
           out = input.replace(new RegExp(pattern, matchCase ? 'g' : 'gi'), replace);
@@ -136,10 +246,8 @@
       } catch (err) {
         return setOutput(card, 'Regex error: ' + err.message);
       }
-      
       setOutput(card, out || '(empty)');
     },
-    
     sort(card) {
       const input = getInput(card).value;
       const mode = card.querySelector('[data-field="mode"]').value;
@@ -151,7 +259,6 @@
       if (mode === 'num') lines.sort((a, b) => (parseFloat(a) || 0) - (parseFloat(b) || 0));
       setOutput(card, lines.join('\n') || '(empty)');
     },
-    
     clean(card) {
       let out = getInput(card).value;
       const f = k => card.querySelector('[data-field="' + k + '"]').checked;
@@ -160,17 +267,12 @@
       if (f('emails')) out = out.replace(/[\w.+-]+@[\w.-]+\.\w+/g, '');
       if (f('numbers')) out = out.replace(/\d+/g, '');
       if (f('special')) {
-        try {
-          const re = new RegExp('[^\\p{L}\\p{N}\\s.,!?;:\'"()\\-]', 'gu');
-          out = out.replace(re, '');
-        } catch {
-          out = out.replace(/[^A-Za-z0-9\s.,!?;:'"()\-]/g, '');
-        }
+        try { out = out.replace(new RegExp('[^\\p{L}\\p{N}\\s.,!?;:\'"()\\-]', 'gu'), ''); }
+        catch { out = out.replace(/[^A-Za-z0-9\s.,!?;:'"()\-]/g, ''); }
       }
       if (f('ws')) out = out.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
       setOutput(card, out || '(empty)');
     },
-    
     compare(card) {
       const a = card.querySelector('[data-field="a"]').value;
       const b = card.querySelector('[data-field="b"]').value;
@@ -181,13 +283,10 @@
       const both = [...setA].filter(w => setB.has(w)).sort();
       setOutput(card, [
         'Only in A (' + onlyA.length + '): ' + (onlyA.slice(0, 30).join(', ') || '—'),
-        '',
-        'Only in B (' + onlyB.length + '): ' + (onlyB.slice(0, 30).join(', ') || '—'),
-        '',
-        'In both (' + both.length + '): ' + (both.slice(0, 30).join(', ') || '—'),
+        '', 'Only in B (' + onlyB.length + '): ' + (onlyB.slice(0, 30).join(', ') || '—'),
+        '', 'In both (' + both.length + '): ' + (both.slice(0, 30).join(', ') || '—'),
       ].join('\n'));
     },
-    
     dupwords(card) {
       const words = wordsOf(getInput(card).value);
       const freq = {};
@@ -196,7 +295,6 @@
       if (!dups.length) return setOutput(card, 'No duplicate words found.');
       setOutput(card, dups.map(e => e[0] + ' — ' + e[1] + '×').join('\n'));
     },
-    
     density(card) {
       const text = getInput(card).value;
       const keyword = (card.querySelector('[data-field="keyword"]').value || '').trim().toLowerCase();
@@ -204,15 +302,8 @@
       const words = wordsOf(text);
       if (!words.length) return setOutput(card, 'No words to analyse.');
       const hits = words.filter(w => w === keyword).length;
-      const density = (hits / words.length * 100).toFixed(2);
-      setOutput(card,
-        'Keyword: ' + keyword + '\n' +
-        'Occurrences: ' + hits + '\n' +
-        'Total words: ' + words.length + '\n' +
-        'Density: ' + density + '%'
-      );
+      setOutput(card, 'Keyword: ' + keyword + '\nOccurrences: ' + hits + '\nTotal words: ' + words.length + '\nDensity: ' + (hits / words.length * 100).toFixed(2) + '%');
     },
-    
     mostused(card) {
       const words = wordsOf(getInput(card).value);
       if (!words.length) return setOutput(card, '(empty)');
@@ -221,28 +312,15 @@
       const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 20);
       setOutput(card, sorted.map((e, i) => (i + 1) + '. ' + e[0] + ' — ' + e[1] + '×').join('\n'));
     },
-    
     statistics(card) {
       if (!window.Analyzer) return setOutput(card, 'Analyzer not ready.');
       const m = window.Analyzer.analyze(getInput(card).value);
-      setOutput(card, [
-        'Words: ' + formatNumber(m.words),
-        'Characters: ' + formatNumber(m.chars),
-        'Characters (no spaces): ' + formatNumber(m.charsNoSpaces),
-        'Sentences: ' + formatNumber(m.sentences),
-        'Paragraphs: ' + formatNumber(m.paragraphs),
-        'Avg word length: ' + m.avgWordLen,
-        'Avg sentence length: ' + m.avgSentenceLen,
-        'Reading time: ' + formatDuration(m.readingTime),
-        'Speaking time: ' + formatDuration(m.speakingTime),
-        'Unique words: ' + formatNumber(m.uniqueWords),
-        'Longest word: ' + m.longestWord,
-        'Shortest word: ' + m.shortestWord,
-      ].join('\n'));
+      setOutput(card, ['Words: ' + formatNumber(m.words), 'Characters: ' + formatNumber(m.chars), 'Sentences: ' + formatNumber(m.sentences), 'Paragraphs: ' + formatNumber(m.paragraphs), 'Avg word length: ' + m.avgWordLen, 'Reading time: ' + formatDuration(m.readingTime)].join('\n'));
     },
   };
 
-  grid.addEventListener('click', function (e) {
+  // Document-level click delegation (works inside modal)
+  document.addEventListener('click', function (e) {
     const runBtn = e.target.closest('.tool-run');
     if (runBtn) {
       const card = getCard(runBtn);
@@ -265,7 +343,8 @@
     }
   });
 
+  injectUploadButtons();
   bindLiveInputs();
-  console.log('[WordsAnalyser] tools.js loaded — 14 tools wired');
+  console.log('[WordsAnalyser] tools.js loaded — 14 tools wired with modals & uploads');
   window.Tools = { runners };
 })();
