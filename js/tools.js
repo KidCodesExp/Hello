@@ -1,6 +1,5 @@
-// language: JavaScript, file: tools.js
-// All 14 text utilities. Word extraction goes through WordHelpers — no
-// \p{} literals anywhere in this file.
+// language: JavaScript, file: js/tools.js
+// All 14 text utilities. Upgraded Find & Replace with Match Case, Whole Word, and Regex.
 
 (function () {
   'use strict';
@@ -18,6 +17,7 @@
   const getCard = el => el.closest('.tool-card');
   const getInput = card => card.querySelector('.tool-input:not([data-field])') || card.querySelector('.tool-input');
   const getOutput = card => card.querySelector('.tool-output');
+  
   const setOutput = (card, text) => {
     const out = getOutput(card);
     if (!out) return;
@@ -36,12 +36,13 @@
       const chars = counterCard.querySelector('[data-mini="counter-chars"]');
       const sentences = counterCard.querySelector('[data-mini="counter-sentences"]');
       const paragraphs = counterCard.querySelector('[data-mini="counter-paragraphs"]');
+      
       const update = function () {
         const m = window.Analyzer.analyze(ta.value);
-        words.textContent = formatNumber(m.words);
-        chars.textContent = formatNumber(m.chars);
-        sentences.textContent = formatNumber(m.sentences);
-        paragraphs.textContent = formatNumber(m.paragraphs);
+        if (words) words.textContent = formatNumber(m.words);
+        if (chars) chars.textContent = formatNumber(m.chars);
+        if (sentences) sentences.textContent = formatNumber(m.sentences);
+        if (paragraphs) paragraphs.textContent = formatNumber(m.paragraphs);
       };
       ta.addEventListener('input', debounce(update, 100));
       update();
@@ -53,11 +54,12 @@
       const read = readingCard.querySelector('[data-mini="reading-read"]');
       const speak = readingCard.querySelector('[data-mini="reading-speak"]');
       const words = readingCard.querySelector('[data-mini="reading-words"]');
+      
       const update = function () {
         const m = window.Analyzer.analyze(ta.value);
-        read.textContent = formatDuration(m.readingTime);
-        speak.textContent = formatDuration(m.speakingTime);
-        words.textContent = formatNumber(m.words);
+        if (read) read.textContent = formatDuration(m.readingTime);
+        if (speak) speak.textContent = formatDuration(m.speakingTime);
+        if (words) words.textContent = formatNumber(m.words);
       };
       ta.addEventListener('input', debounce(update, 100));
       update();
@@ -77,6 +79,7 @@
       if (action === 'sentence') out = input.toLowerCase().replace(/(^\s*\w|[.!?]\s*\w)/g, c => c.toUpperCase());
       setOutput(card, out || '(empty)');
     },
+    
     spaces(card) {
       const out = getInput(card).value
         .split('\n')
@@ -85,6 +88,7 @@
         .replace(/\n{3,}/g, '\n\n');
       setOutput(card, out || '(empty)');
     },
+    
     duplines(card) {
       const seen = new Set();
       const out = getInput(card).value.split('\n').filter(l => {
@@ -95,6 +99,7 @@
       }).join('\n');
       setOutput(card, out || '(empty)');
     },
+    
     reverse(card, action) {
       const input = getInput(card).value;
       let out = '';
@@ -103,20 +108,38 @@
       if (action === 'lines') out = input.split('\n').reverse().join('\n');
       setOutput(card, out || '(empty)');
     },
+    
     findreplace(card) {
       const input = getInput(card).value;
       const find = card.querySelector('[data-field="find"]').value;
       const replace = card.querySelector('[data-field="replace"]').value;
+      
+      // Get checkbox states
+      const matchCase = card.querySelector('[data-field="matchcase"]').checked;
+      const wholeWord = card.querySelector('[data-field="wholeword"]').checked;
       const useRegex = card.querySelector('[data-field="regex"]').checked;
+
       if (!find) return setOutput(card, '(enter text to find)');
+
       let out;
       try {
-        out = useRegex ? input.replace(new RegExp(find, 'g'), replace) : input.split(find).join(replace);
+        if (useRegex) {
+          // Regex mode
+          out = input.replace(new RegExp(find, matchCase ? 'g' : 'gi'), replace);
+        } else {
+          // Standard text mode
+          // Escape any regex special characters in the search string
+          let escaped = find.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          let pattern = wholeWord ? '\\b' + escaped + '\\b' : escaped;
+          out = input.replace(new RegExp(pattern, matchCase ? 'g' : 'gi'), replace);
+        }
       } catch (err) {
         return setOutput(card, 'Regex error: ' + err.message);
       }
+      
       setOutput(card, out || '(empty)');
     },
+    
     sort(card) {
       const input = getInput(card).value;
       const mode = card.querySelector('[data-field="mode"]').value;
@@ -128,6 +151,7 @@
       if (mode === 'num') lines.sort((a, b) => (parseFloat(a) || 0) - (parseFloat(b) || 0));
       setOutput(card, lines.join('\n') || '(empty)');
     },
+    
     clean(card) {
       let out = getInput(card).value;
       const f = k => card.querySelector('[data-field="' + k + '"]').checked;
@@ -136,7 +160,6 @@
       if (f('emails')) out = out.replace(/[\w.+-]+@[\w.-]+\.\w+/g, '');
       if (f('numbers')) out = out.replace(/\d+/g, '');
       if (f('special')) {
-        // Build special-char stripper safely — no \p{} literal
         try {
           const re = new RegExp('[^\\p{L}\\p{N}\\s.,!?;:\'"()\\-]', 'gu');
           out = out.replace(re, '');
@@ -147,6 +170,7 @@
       if (f('ws')) out = out.replace(/[ \t]+/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
       setOutput(card, out || '(empty)');
     },
+    
     compare(card) {
       const a = card.querySelector('[data-field="a"]').value;
       const b = card.querySelector('[data-field="b"]').value;
@@ -163,6 +187,7 @@
         'In both (' + both.length + '): ' + (both.slice(0, 30).join(', ') || '—'),
       ].join('\n'));
     },
+    
     dupwords(card) {
       const words = wordsOf(getInput(card).value);
       const freq = {};
@@ -171,6 +196,7 @@
       if (!dups.length) return setOutput(card, 'No duplicate words found.');
       setOutput(card, dups.map(e => e[0] + ' — ' + e[1] + '×').join('\n'));
     },
+    
     density(card) {
       const text = getInput(card).value;
       const keyword = (card.querySelector('[data-field="keyword"]').value || '').trim().toLowerCase();
@@ -186,6 +212,7 @@
         'Density: ' + density + '%'
       );
     },
+    
     mostused(card) {
       const words = wordsOf(getInput(card).value);
       if (!words.length) return setOutput(card, '(empty)');
@@ -194,6 +221,7 @@
       const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 20);
       setOutput(card, sorted.map((e, i) => (i + 1) + '. ' + e[0] + ' — ' + e[1] + '×').join('\n'));
     },
+    
     statistics(card) {
       if (!window.Analyzer) return setOutput(card, 'Analyzer not ready.');
       const m = window.Analyzer.analyze(getInput(card).value);
