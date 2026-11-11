@@ -794,3 +794,8 @@ main {
 .toast.error { border-left: 2px solid var(--error); }
 .toast.info { border-left: 2px solid var(--accent); }
 .toast.out { animation: toastOut 250ms ease forwards; }
+
+/* Force the [hidden] attribute to win against any class-based display rule.
+   Without this, `.upload-progress-wrap { display:flex }` and `.btn { display:inline-flex }`
+   silently override the browser's [hidden] rule. */
+[hidden] { display: none !important; }
