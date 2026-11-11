@@ -52,13 +52,8 @@
   </nav>
   <div class="header-actions">
     <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
-      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <circle cx="12" cy="12" r="4"/>
-        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round"/>
-      </svg>
-      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round"/></svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </button>
     <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
       <span></span><span></span><span></span>
@@ -67,7 +62,7 @@
 </header>
 
 <main>
-
+  <!-- HOME TAB -->
   <section class="tab-panel active" id="tab-home" role="tabpanel" aria-labelledby="tab-home-label">
     <div class="hero">
       <p class="eyebrow">Local · Private · Precise</p>
@@ -78,9 +73,7 @@
     <section class="upload-section" aria-labelledby="upload-title">
       <h2 class="section-title" id="upload-title">Upload files</h2>
       <div class="upload-zone" id="upload-zone" tabindex="0" role="button" aria-label="Upload files: click to browse or drop files here">
-        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-          <path d="M12 16V4m0 0L7 9m5-5 5 5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/></svg>
         <p class="upload-title">Drop files here or <span class="link">browse</span></p>
         <p class="upload-hint">TXT · MD · CSV · JSON · XML · PDF · DOCX · HTML · CSS · JS · RTF · LOG</p>
         <input type="file" id="file-input" multiple accept=".txt,.md,.csv,.json,.xml,.pdf,.docx,.doc,.html,.htm,.css,.js,.rtf,.log" hidden>
@@ -140,9 +133,7 @@
 
       <div class="freq-section">
         <h3 class="sub-title">Most frequent words</h3>
-        <div class="freq-table" id="freq-table">
-          <p class="empty-state">Upload a file or paste text to see word frequency.</p>
-        </div>
+        <div class="freq-table" id="freq-table"><p class="empty-state">Upload a file or paste text to see word frequency.</p></div>
       </div>
     </section>
 
@@ -152,18 +143,10 @@
         <span class="hint">14+ working utilities</span>
       </div>
       <div class="quick-grid">
-        <button class="quick-card" data-goto="tools" data-tool="counter">
-          <span class="quick-title">Live Counter</span><span class="quick-desc">Words, characters, sentences, paragraphs</span>
-        </button>
-        <button class="quick-card" data-goto="tools" data-tool="case">
-          <span class="quick-title">Case Converter</span><span class="quick-desc">Upper · Lower · Title · Sentence</span>
-        </button>
-        <button class="quick-card" data-goto="tools" data-tool="clean">
-          <span class="quick-title">Text Cleaning</span><span class="quick-desc">Strip HTML, URLs, and noise</span>
-        </button>
-        <button class="quick-card" data-goto="tools" data-tool="compare">
-          <span class="quick-title">Text Comparison</span><span class="quick-desc">Word-level differences between two texts</span>
-        </button>
+        <button class="quick-card" data-goto="tools" data-tool="counter"><span class="quick-title">Live Counter</span><span class="quick-desc">Words, characters, sentences, paragraphs</span></button>
+        <button class="quick-card" data-goto="tools" data-tool="case"><span class="quick-title">Case Converter</span><span class="quick-desc">Upper · Lower · Title · Sentence</span></button>
+        <button class="quick-card" data-goto="tools" data-tool="clean"><span class="quick-title">Text Cleaning</span><span class="quick-desc">Strip HTML, URLs, and noise</span></button>
+        <button class="quick-card" data-goto="tools" data-tool="compare"><span class="quick-title">Text Comparison</span><span class="quick-desc">Word-level differences between two texts</span></button>
       </div>
     </section>
 
@@ -172,21 +155,79 @@
         <h2 class="section-title" id="recent-title">Recently analysed</h2>
         <button class="btn btn-ghost btn-sm" id="clear-dashboard">Clear dashboard</button>
       </div>
-      <div class="recent-list" id="recent-list">
-        <p class="empty-state">No files analysed yet this session.</p>
-      </div>
+      <div class="recent-list" id="recent-list"><p class="empty-state">No files analysed yet this session.</p></div>
     </section>
   </section>
 
+  <!-- FEATURES TAB -->
   <section class="tab-panel" id="tab-features" role="tabpanel" aria-labelledby="tab-features-label">
     <div class="hero hero-sm">
       <p class="eyebrow">Utilities</p>
       <h1 class="hero-title">Every text tool.<br><span class="muted">One workspace.</span></h1>
-      <p class="hero-sub">14 fully working tools. Nothing simulated, nothing shipped as a placeholder.</p>
+      <p class="hero-sub">Click an icon to launch a tool. Upload files directly into any tool.</p>
     </div>
 
-    <div class="tools-grid" id="tools-grid">
+    <div class="tool-launcher-grid" id="tool-launcher-grid">
+      <button class="launcher-card" data-tool="counter">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
+        <span class="launcher-title">Live Counter</span>
+      </button>
+      <button class="launcher-card" data-tool="reading">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="launcher-title">Reading Time</span>
+      </button>
+      <button class="launcher-card" data-tool="case">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 20l6-16 6 16M6.5 14h7M18 20l4-10 4 10m-6.5-4h5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="launcher-title">Case Converter</span>
+      </button>
+      <button class="launcher-card" data-tool="spaces">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" stroke-linecap="round"/></svg>
+        <span class="launcher-title">Remove Spaces</span>
+      </button>
+      <button class="launcher-card" data-tool="duplines">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3v18M14 3v18M3 9h18M3 15h18" stroke-linecap="round"/></svg>
+        <span class="launcher-title">Duplicate Lines</span>
+      </button>
+      <button class="launcher-card" data-tool="reverse">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="launcher-title">Text Reversal</span>
+      </button>
+      <button class="launcher-card" data-tool="findreplace">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="launcher-title">Find & Replace</span>
+      </button>
+      <button class="launcher-card" data-tool="sort">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 6h18M6 12h12M10 18h4" stroke-linecap="round"/></svg>
+        <span class="launcher-title">Text Sorting</span>
+      </button>
+      <button class="launcher-card" data-tool="clean">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="launcher-title">Text Cleaning</span>
+      </button>
+      <button class="launcher-card" data-tool="compare">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 3H5a2 2 0 00-2 2v14c0 1.1.9 2 2 2h3m8-18h3a2 2 0 012 2v14a2 2 0 01-2 2h-3M8 3v18m8-18v18" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="launcher-title">Comparison</span>
+      </button>
+      <button class="launcher-card" data-tool="dupwords">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2" ry="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" /></svg>
+        <span class="launcher-title">Duplicate Words</span>
+      </button>
+      <button class="launcher-card" data-tool="density">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="launcher-title">Keyword Density</span>
+      </button>
+      <button class="launcher-card" data-tool="mostused">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 20V10M18 20V4M6 20v-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="launcher-title">Most Used Words</span>
+      </button>
+      <button class="launcher-card" data-tool="statistics">
+        <svg class="launcher-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="launcher-title">Statistics</span>
+      </button>
+    </div>
 
+    <!-- HIDDEN TOOL PANELS (Injected into modal dynamically) -->
+    <div id="tool-panels" style="display:none;">
       <article class="tool-card" data-tool="counter">
         <header class="tool-head"><h3>Live Counter</h3><p>Auto-updates as you type</p></header>
         <textarea class="tool-input" data-auto placeholder="Type or paste text..."></textarea>
@@ -254,13 +295,17 @@
       </article>
 
       <article class="tool-card" data-tool="findreplace">
-        <header class="tool-head"><h3>Find & Replace</h3><p>Replace all occurrences</p></header>
-        <textarea class="tool-input" placeholder="Text to search within..."></textarea>
+        <header class="tool-head"><h3>Find & Replace</h3><p>Replace words with precision</p></header>
+        <textarea class="tool-input" placeholder="Paste your text here..."></textarea>
         <div class="field-row">
-          <input type="text" class="tool-field" data-field="find" placeholder="Find...">
+          <input type="text" class="tool-field" data-field="find" placeholder="Find this word...">
           <input type="text" class="tool-field" data-field="replace" placeholder="Replace with...">
         </div>
-        <label class="check-row"><input type="checkbox" data-field="regex"> Use regex</label>
+        <div class="check-list" style="flex-direction: row; flex-wrap: wrap; gap: 16px; margin-bottom: 4px;">
+          <label class="check-row"><input type="checkbox" data-field="matchcase"> Match case</label>
+          <label class="check-row"><input type="checkbox" data-field="wholeword"> Whole word</label>
+          <label class="check-row"><input type="checkbox" data-field="regex"> Regex</label>
+        </div>
         <div class="tool-actions">
           <button class="btn btn-primary tool-run" data-action="run">Replace all</button>
           <button class="btn btn-ghost tool-copy">Copy</button>
@@ -357,99 +402,39 @@
         </div>
         <div class="tool-output" data-empty="true">Statistics appear here</div>
       </article>
-      
-      <!-- 7. FIND & REPLACE -->
-      <article class="tool-card" data-tool="findreplace">
-        <header class="tool-head"><h3>Find & Replace</h3><p>Replace words with precision</p></header>
-        <textarea class="tool-input" placeholder="Paste your text here..."></textarea>
-        <div class="field-row">
-          <input type="text" class="tool-field" data-field="find" placeholder="Find this word...">
-          <input type="text" class="tool-field" data-field="replace" placeholder="Replace with...">
-        </div>
-        <div class="check-list" style="flex-direction: row; flex-wrap: wrap; gap: 16px; margin-bottom: 4px;">
-          <label class="check-row"><input type="checkbox" data-field="matchcase"> Match case</label>
-          <label class="check-row"><input type="checkbox" data-field="wholeword"> Whole word</label>
-          <label class="check-row"><input type="checkbox" data-field="regex"> Regex</label>
-        </div>
-        <div class="tool-actions">
-          <button class="btn btn-primary tool-run" data-action="run">Replace all</button>
-          <button class="btn btn-ghost tool-copy">Copy</button>
-        </div>
-        <div class="tool-output" data-empty="true">Output appears here</div>
-      </article>
-
     </div>
   </section>
 
+  <!-- CONTACT TAB -->
   <section class="tab-panel" id="tab-contact" role="tabpanel" aria-labelledby="tab-contact-label">
     <div class="hero hero-sm">
       <p class="eyebrow">Contact</p>
       <h1 class="hero-title">Get in touch.</h1>
       <p class="hero-sub">Feedback, bugs, or requests — the door is open.</p>
     </div>
-
     <div class="contact-grid">
-      <div class="contact-card">
-        <h3>Email</h3>
-        <p>For questions and feedback.</p>
-        <a href="mailto:hello@wordsanalyser.app" class="contact-link">hello@wordsanalyser.app</a>
-      </div>
-      <div class="contact-card">
-        <h3>Website</h3>
-        <p>Fully open source. Runs on GitHub Pages and Netlify.</p>
-        <span class="contact-link">wordsanalyser.app</span>
-      </div>
-      <div class="contact-card">
-        <h3>Feedback</h3>
-        <p>Feature requests and bug reports welcome.</p>
-        <a href="mailto:feedback@wordsanalyser.app" class="contact-link">feedback@wordsanalyser.app</a>
-      </div>
-      <div class="contact-card">
-        <h3>Social</h3>
-        <p>Follow updates.</p>
-        <div class="social-row">
-          <a href="#" class="social-link" aria-label="GitHub">GitHub</a>
-          <a href="#" class="social-link" aria-label="X (Twitter)">X</a>
-          <a href="#" class="social-link" aria-label="LinkedIn">LinkedIn</a>
-        </div>
-      </div>
+      <div class="contact-card"><h3>Email</h3><p>For questions and feedback.</p><a href="mailto:hello@wordsanalyser.app" class="contact-link">hello@wordsanalyser.app</a></div>
+      <div class="contact-card"><h3>Website</h3><p>Fully open source. Runs on GitHub Pages and Netlify.</p><span class="contact-link">wordsanalyser.app</span></div>
+      <div class="contact-card"><h3>Feedback</h3><p>Feature requests and bug reports welcome.</p><a href="mailto:feedback@wordsanalyser.app" class="contact-link">feedback@wordsanalyser.app</a></div>
+      <div class="contact-card"><h3>Social</h3><p>Follow updates.</p><div class="social-row"><a href="#" class="social-link">GitHub</a><a href="#" class="social-link">X</a><a href="#" class="social-link">LinkedIn</a></div></div>
     </div>
   </section>
 
+  <!-- PRIVACY TAB -->
   <section class="tab-panel" id="tab-privacy" role="tabpanel" aria-labelledby="tab-privacy-label">
     <div class="hero hero-sm">
       <p class="eyebrow">Privacy</p>
       <h1 class="hero-title">Your files<br><span class="muted">never leave your device.</span></h1>
       <p class="hero-sub">WordsAnalyser runs entirely in your browser. Nothing is uploaded, stored, or transmitted.</p>
     </div>
-
     <div class="privacy-grid">
-      <div class="privacy-card">
-        <h3>100% Local Processing</h3>
-        <p>Every file is read and analysed inside your browser using JavaScript. No server, no backend, no network request.</p>
-      </div>
-      <div class="privacy-card">
-        <h3>No Uploads</h3>
-        <p>Your documents are never uploaded to any external server — not ours, not any third party. There is no server.</p>
-      </div>
-      <div class="privacy-card">
-        <h3>No Permanent Storage</h3>
-        <p>Uploaded files live in memory only, for the current session. Close the tab and everything is gone.</p>
-      </div>
-      <div class="privacy-card">
-        <h3>Session-Only History</h3>
-        <p>Your "recently analysed" list is kept in memory for convenience. It is wiped on refresh or via the Clear Dashboard button.</p>
-      </div>
-      <div class="privacy-card">
-        <h3>No Tracking</h3>
-        <p>No analytics, no cookies, no fingerprinting. WordsAnalyser does not track you. Your theme preference is the only thing stored (in <code>localStorage</code>) and it never leaves your device.</p>
-      </div>
-      <div class="privacy-card">
-        <h3>Full Control</h3>
-        <p>Remove any file at any time with the ✕ button. Clear everything with one click in the dashboard.</p>
-      </div>
+      <div class="privacy-card"><h3>100% Local Processing</h3><p>Every file is read and analysed inside your browser using JavaScript. No server, no backend, no network request.</p></div>
+      <div class="privacy-card"><h3>No Uploads</h3><p>Your documents are never uploaded to any external server — not ours, not any third party. There is no server.</p></div>
+      <div class="privacy-card"><h3>No Permanent Storage</h3><p>Uploaded files live in memory only, for the current session. Close the tab and everything is gone.</p></div>
+      <div class="privacy-card"><h3>Session-Only History</h3><p>Your "recently analysed" list is kept in memory for convenience. It is wiped on refresh or via the Clear Dashboard button.</p></div>
+      <div class="privacy-card"><h3>No Tracking</h3><p>No analytics, no cookies, no fingerprinting. WordsAnalyser does not track you. Your theme preference is stored in localStorage.</p></div>
+      <div class="privacy-card"><h3>Full Control</h3><p>Remove any file at any time with the ✕ button. Clear everything with one click in the dashboard.</p></div>
     </div>
-
     <div class="privacy-policy">
       <h2>Privacy Policy</h2>
       <p><strong>Effective:</strong> 2026 · WordsAnalyser</p>
@@ -458,22 +443,14 @@
       <p>Fonts are loaded from Google Fonts. PDF parsing uses Mozilla's PDF.js and DOCX parsing uses Mammoth.js — both loaded from public CDNs and running locally in your browser. No data is sent to these CDNs by the app; only the library code is fetched.</p>
       <p>The only value WordsAnalyser stores locally is your chosen theme (dark or light) in your browser's <code>localStorage</code>. This is a UI preference, never transmitted, and can be cleared at any time via your browser settings.</p>
       <p>By using WordsAnalyser you agree that you are responsible for the files you process and that WordsAnalyser holds no liability for the content of files you analyse.</p>
-      <p>Questions? Email <a href="mailto:privacy@wordsanalyser.app">privacy@wordsanalyser.app</a>.</p>
     </div>
   </section>
-
 </main>
 
 <footer class="site-footer">
   <div class="footer-top">
     <div class="footer-brand">
-      <svg class="brand-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
-        <rect x="8" y="16" width="6" height="32" rx="1.5" fill="currentColor"/>
-        <rect x="20" y="22" width="6" height="26" rx="1.5" fill="currentColor" opacity="0.7"/>
-        <rect x="32" y="10" width="6" height="38" rx="1.5" fill="currentColor"/>
-        <rect x="44" y="18" width="6" height="30" rx="1.5" fill="currentColor" opacity="0.85"/>
-        <rect x="6" y="52" width="52" height="3" rx="1.5" fill="currentColor" opacity="0.5"/>
-      </svg>
+      <svg class="brand-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true"><rect x="8" y="16" width="6" height="32" rx="1.5" fill="currentColor"/><rect x="20" y="22" width="6" height="26" rx="1.5" fill="currentColor" opacity="0.7"/><rect x="32" y="10" width="6" height="38" rx="1.5" fill="currentColor"/><rect x="44" y="18" width="6" height="30" rx="1.5" fill="currentColor" opacity="0.85"/><rect x="6" y="52" width="52" height="3" rx="1.5" fill="currentColor" opacity="0.5"/></svg>
       <span>WordsAnalyser</span>
     </div>
     <nav class="footer-nav">
@@ -485,11 +462,23 @@
   </div>
   <div class="footer-bottom">
     <p>© <span id="year">2026</span> WordsAnalyser. All Rights Reserved.</p>
-    <button class="back-to-top" id="back-to-top" aria-label="Back to top">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 15 6-6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </button>
+    <button class="back-to-top" id="back-to-top" aria-label="Back to top"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 15 6-6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
   </div>
 </footer>
+
+<!-- TOOL MODAL -->
+<div class="tool-modal" id="tool-modal" aria-hidden="true">
+  <div class="tool-modal-backdrop" id="tool-modal-backdrop"></div>
+  <div class="tool-modal-content" role="dialog" aria-modal="true">
+    <header class="tool-modal-header">
+      <h2 id="tool-modal-title">Tool</h2>
+      <button class="tool-modal-close" id="tool-modal-close" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+    <div class="tool-modal-body" id="tool-modal-body"></div>
+  </div>
+</div>
 
 <div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
@@ -502,3 +491,5 @@
 <script src="js/statistics.js"></script>
 <script src="js/tools.js"></script>
 <script src="js/app.js"></script>
+</body>
+</html>
