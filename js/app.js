@@ -4,27 +4,15 @@
 (function () {
   'use strict';
 
-  const VERSION = '2.2.0';
+  const VERSION = '3.0.0';
 
-  // ============================================================
-  // Global error handler — silent failures become visible
-  // ============================================================
   window.addEventListener('error', function (e) {
     const file = e.filename || '';
     if (file.indexOf('/js/') !== -1 || (e.message || '').indexOf('WordsAnalyser') !== -1) {
       console.error('[WordsAnalyser] JS error:', e.message, 'at', file + ':' + e.lineno);
-      if (typeof toast === 'function') {
-        toast('Script error — open console for details', 'error', 6000);
-      }
     }
   });
-  window.addEventListener('unhandledrejection', function (e) {
-    console.error('[WordsAnalyser] Unhandled rejection:', e.reason);
-  });
 
-  // ============================================================
-  // Theme — applied before paint
-  // ============================================================
   initTheme();
 
   const themeBtn = document.getElementById('theme-toggle');
@@ -35,9 +23,6 @@
     });
   }
 
-  // ============================================================
-  // Ripples
-  // ============================================================
   attachRipples();
   const toolsGrid = document.getElementById('tools-grid');
   if (toolsGrid && typeof MutationObserver !== 'undefined') {
@@ -45,9 +30,6 @@
       .observe(toolsGrid, { childList: true, subtree: true });
   }
 
-  // ============================================================
-  // Startup loader
-  // ============================================================
   const loader = document.getElementById('startup-loader');
   const fill = document.getElementById('loader-fill');
   const pct = document.getElementById('loader-percent');
@@ -83,20 +65,11 @@
     setTimeout(finishLoading, 2600);
   }
 
-  // ============================================================
-  // Year
-  // ============================================================
   const yearEl = document.getElementById('year');
   if (yearEl) yearEl.textContent = new Date().getFullYear();
 
-  // ============================================================
-  // Recent
-  // ============================================================
   if (window.Statistics) window.Statistics.renderRecent();
 
-  // ============================================================
-  // Keyboard shortcut
-  // ============================================================
   document.addEventListener('keydown', function (e) {
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
@@ -107,22 +80,50 @@
   });
 
   // ============================================================
-  // Boot banner
+  // Feedback Form AJAX Submission (No Redirect)
   // ============================================================
+  const feedbackForm = document.getElementById('feedback-form');
+  const submitBtn = document.getElementById('submit-btn');
+
+  if (feedbackForm && submitBtn) {
+    feedbackForm.addEventListener('submit', function (e) {
+      e.preventDefault();
+      
+      const originalText = submitBtn.textContent;
+      submitBtn.textContent = 'Sending...';
+      submitBtn.disabled = true;
+      submitBtn.style.opacity = '0.7';
+
+      const formData = new FormData(feedbackForm);
+
+      fetch(feedbackForm.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'Accept': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          toast('Feedback sent successfully!', 'success');
+          feedbackForm.reset();
+        } else {
+          toast('Something went wrong. Please try again.', 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Error submitting form:', error);
+        toast('Failed to send. Check your connection.', 'error');
+      })
+      .finally(() => {
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = '1';
+      });
+    });
+  }
+
   console.log('[WordsAnalyser] ═════════════════════════════════');
   console.log('[WordsAnalyser]  v' + VERSION + ' booted');
-  console.log('[WordsAnalyser]  WordHelpers: ' + (window.WordHelpers ? (window.WordHelpers.unicodeSupported ? 'Unicode ✓' : 'ASCII fallback') : 'MISSING ✗'));
-  console.log('[WordsAnalyser]  Analyzer: ' + (window.Analyzer ? 'v' + window.Analyzer.version + ' ✓' : 'MISSING ✗'));
-  console.log('[WordsAnalyser]  Uploader: ' + (window.Uploader ? '✓' : 'MISSING ✗'));
-  console.log('[WordsAnalyser]  Tools: ' + (window.Tools ? '✓' : 'MISSING ✗'));
-  console.log('[WordsAnalyser]  Statistics: ' + (window.Statistics ? '✓' : 'MISSING ✗'));
-  console.log('[WordsAnalyser]  Navigation: ' + (window.Navigation ? '✓' : 'MISSING ✗'));
-  console.log('[WordsAnalyser] ═════════════════════════════════');
-
-  if (!window.Analyzer) {
-    console.error('[WordsAnalyser] FATAL: Analyzer not loaded. Check the browser console above for the parse error.');
-    if (typeof toast === 'function') {
-      toast('Analyzer failed to load — see console', 'error', 10000);
-    }
-  }
 })();
