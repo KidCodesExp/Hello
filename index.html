@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>WordsAnalyser — Professional Text Analysis, 100% Local</title>
   <meta name="description" content="Professional file & text analysis in your browser. 100% local, private, fast.">
-  <meta name="theme-color" content="#08080a">
+  <meta name="theme-color" content="#08080a" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,7 +17,6 @@
 </head>
 <body>
 
-<!-- ============ STARTUP LOADER ============ -->
 <div id="startup-loader" class="startup-loader" role="status" aria-live="polite">
   <div class="loader-brand">
     <svg class="loader-logo" viewBox="0 0 64 64" fill="none" aria-hidden="true">
@@ -33,7 +33,6 @@
   <div class="loader-percent" id="loader-percent">0%</div>
 </div>
 
-<!-- ============ HEADER ============ -->
 <header class="site-header">
   <a href="#home" class="brand" data-tab-link="home" aria-label="WordsAnalyser home">
     <svg class="brand-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
@@ -51,15 +50,24 @@
     <button class="nav-btn" data-tab="contact" role="tab" aria-selected="false">Contact</button>
     <button class="nav-btn" data-tab="privacy" role="tab" aria-selected="false">Privacy</button>
   </nav>
-  <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
-    <span></span><span></span><span></span>
-  </button>
+  <div class="header-actions">
+    <button class="theme-toggle" id="theme-toggle" aria-label="Toggle theme" title="Toggle theme">
+      <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <circle cx="12" cy="12" r="4"/>
+        <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-linecap="round"/>
+      </svg>
+      <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79Z" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+    <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
 </header>
 
-<!-- ============ MAIN ============ -->
 <main>
 
-  <!-- HOME TAB -->
   <section class="tab-panel active" id="tab-home" role="tabpanel" aria-labelledby="tab-home-label">
     <div class="hero">
       <p class="eyebrow">Local · Private · Precise</p>
@@ -67,7 +75,6 @@
       <p class="hero-sub">Drop a file or paste text. Get precise, instant, private analysis — right inside your browser. Nothing ever leaves your device.</p>
     </div>
 
-    <!-- Upload zone -->
     <section class="upload-section" aria-labelledby="upload-title">
       <h2 class="section-title" id="upload-title">Upload files</h2>
       <div class="upload-zone" id="upload-zone" tabindex="0" role="button" aria-label="Upload files: click to browse or drop files here">
@@ -88,16 +95,14 @@
       </div>
     </section>
 
-    <!-- Direct paste textarea -->
     <section class="paste-section" aria-labelledby="paste-title">
       <div class="section-head">
         <h2 class="section-title" id="paste-title">Or paste text</h2>
-        <span class="hint">Analyses in real-time as you type</span>
+        <span class="hint" id="paste-live">0 words · 0 chars</span>
       </div>
       <textarea id="analysis-input" class="main-textarea" placeholder="Paste or type your text here..."></textarea>
     </section>
 
-    <!-- Analysis results -->
     <section class="analysis-section" aria-labelledby="analysis-title">
       <div class="section-head">
         <h2 class="section-title" id="analysis-title">Analysis</h2>
@@ -105,14 +110,14 @@
           <button class="btn btn-ghost" id="analysis-copy" title="Copy results">Copy</button>
           <button class="btn btn-ghost" id="analysis-reset" title="Reset analysis">Reset</button>
           <div class="dropdown" id="download-dropdown">
-            <button class="btn btn-primary dropdown-toggle" id="download-toggle" aria-haspopup="true" aria-expanded="false">
+            <button class="btn btn-primary dropdown-toggle" id="download-toggle" aria-haspopup="true" aria-expanded="false" type="button">
               Download report
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
             <div class="dropdown-menu" role="menu">
-              <button data-export="txt" role="menuitem">TXT</button>
-              <button data-export="csv" role="menuitem">CSV</button>
-              <button data-export="json" role="menuitem">JSON</button>
+              <button type="button" data-export="txt" role="menuitem">TXT</button>
+              <button type="button" data-export="csv" role="menuitem">CSV</button>
+              <button type="button" data-export="json" role="menuitem">JSON</button>
             </div>
           </div>
         </div>
@@ -141,7 +146,6 @@
       </div>
     </section>
 
-    <!-- Quick tools -->
     <section class="quick-tools" aria-labelledby="quick-tools-title">
       <div class="section-head">
         <h2 class="section-title" id="quick-tools-title">Quick tools</h2>
@@ -163,7 +167,6 @@
       </div>
     </section>
 
-    <!-- Recent files -->
     <section class="recent-section" aria-labelledby="recent-title">
       <div class="section-head">
         <h2 class="section-title" id="recent-title">Recently analysed</h2>
@@ -175,7 +178,6 @@
     </section>
   </section>
 
-  <!-- FEATURES TAB -->
   <section class="tab-panel" id="tab-features" role="tabpanel" aria-labelledby="tab-features-label">
     <div class="hero hero-sm">
       <p class="eyebrow">Utilities</p>
@@ -185,7 +187,6 @@
 
     <div class="tools-grid" id="tools-grid">
 
-      <!-- 1. LIVE COUNTER -->
       <article class="tool-card" data-tool="counter">
         <header class="tool-head"><h3>Live Counter</h3><p>Auto-updates as you type</p></header>
         <textarea class="tool-input" data-auto placeholder="Type or paste text..."></textarea>
@@ -197,7 +198,6 @@
         </div>
       </article>
 
-      <!-- 2. READING TIME -->
       <article class="tool-card" data-tool="reading">
         <header class="tool-head"><h3>Reading Time</h3><p>Based on 200 WPM read, 130 WPM speak</p></header>
         <textarea class="tool-input" data-auto placeholder="Type or paste text..."></textarea>
@@ -208,7 +208,6 @@
         </div>
       </article>
 
-      <!-- 3. CASE CONVERTER -->
       <article class="tool-card" data-tool="case">
         <header class="tool-head"><h3>Case Converter</h3><p>Transform all text at once</p></header>
         <textarea class="tool-input" placeholder="Enter text..."></textarea>
@@ -222,7 +221,6 @@
         <div class="tool-output" data-empty="true">Output appears here</div>
       </article>
 
-      <!-- 4. REMOVE EXTRA SPACES -->
       <article class="tool-card" data-tool="spaces">
         <header class="tool-head"><h3>Remove Extra Spaces</h3><p>Collapse whitespace and trim lines</p></header>
         <textarea class="tool-input" placeholder="Paste messy text..."></textarea>
@@ -233,7 +231,6 @@
         <div class="tool-output" data-empty="true">Output appears here</div>
       </article>
 
-      <!-- 5. REMOVE DUPLICATE LINES -->
       <article class="tool-card" data-tool="duplines">
         <header class="tool-head"><h3>Remove Duplicate Lines</h3><p>Keeps first occurrence of each line</p></header>
         <textarea class="tool-input" placeholder="One item per line..."></textarea>
@@ -244,7 +241,6 @@
         <div class="tool-output" data-empty="true">Output appears here</div>
       </article>
 
-      <!-- 6. TEXT REVERSAL -->
       <article class="tool-card" data-tool="reverse">
         <header class="tool-head"><h3>Text Reversal</h3><p>Reverse characters, words, or lines</p></header>
         <textarea class="tool-input" placeholder="Enter text..."></textarea>
@@ -257,7 +253,6 @@
         <div class="tool-output" data-empty="true">Output appears here</div>
       </article>
 
-      <!-- 7. FIND & REPLACE -->
       <article class="tool-card" data-tool="findreplace">
         <header class="tool-head"><h3>Find & Replace</h3><p>Replace all occurrences</p></header>
         <textarea class="tool-input" placeholder="Text to search within..."></textarea>
@@ -273,7 +268,6 @@
         <div class="tool-output" data-empty="true">Output appears here</div>
       </article>
 
-      <!-- 8. TEXT SORTING -->
       <article class="tool-card" data-tool="sort">
         <header class="tool-head"><h3>Text Sorting</h3><p>Sort lines</p></header>
         <textarea class="tool-input" placeholder="One item per line..."></textarea>
@@ -293,7 +287,6 @@
         <div class="tool-output" data-empty="true">Output appears here</div>
       </article>
 
-      <!-- 9. TEXT CLEANING -->
       <article class="tool-card" data-tool="clean">
         <header class="tool-head"><h3>Text Cleaning</h3><p>Strip noise from text</p></header>
         <textarea class="tool-input" placeholder="Paste noisy text..."></textarea>
@@ -312,7 +305,6 @@
         <div class="tool-output" data-empty="true">Output appears here</div>
       </article>
 
-      <!-- 10. TEXT COMPARISON -->
       <article class="tool-card tool-wide" data-tool="compare">
         <header class="tool-head"><h3>Text Comparison</h3><p>Word-level differences between two texts</p></header>
         <div class="compare-grid">
@@ -325,7 +317,6 @@
         <div class="tool-output" data-empty="true">Differences appear here</div>
       </article>
 
-      <!-- 11. DUPLICATE WORD DETECTOR -->
       <article class="tool-card" data-tool="dupwords">
         <header class="tool-head"><h3>Duplicate Word Detector</h3><p>Find repeated words</p></header>
         <textarea class="tool-input" placeholder="Enter text..."></textarea>
@@ -336,7 +327,6 @@
         <div class="tool-output" data-empty="true">Duplicates appear here</div>
       </article>
 
-      <!-- 12. KEYWORD DENSITY -->
       <article class="tool-card" data-tool="density">
         <header class="tool-head"><h3>Keyword Density</h3><p>Check a keyword's frequency</p></header>
         <textarea class="tool-input" placeholder="Enter text..."></textarea>
@@ -349,7 +339,6 @@
         <div class="tool-output" data-empty="true">Density appears here</div>
       </article>
 
-      <!-- 13. MOST USED WORDS -->
       <article class="tool-card" data-tool="mostused">
         <header class="tool-head"><h3>Most Used Words</h3><p>Top 20 words with counts</p></header>
         <textarea class="tool-input" placeholder="Enter text..."></textarea>
@@ -360,7 +349,6 @@
         <div class="tool-output" data-empty="true">Top words appear here</div>
       </article>
 
-      <!-- 14. TEXT STATISTICS -->
       <article class="tool-card" data-tool="statistics">
         <header class="tool-head"><h3>Text Statistics</h3><p>Full statistical breakdown</p></header>
         <textarea class="tool-input" placeholder="Enter text..."></textarea>
@@ -373,7 +361,6 @@
     </div>
   </section>
 
-  <!-- CONTACT TAB -->
   <section class="tab-panel" id="tab-contact" role="tabpanel" aria-labelledby="tab-contact-label">
     <div class="hero hero-sm">
       <p class="eyebrow">Contact</p>
@@ -409,7 +396,6 @@
     </div>
   </section>
 
-  <!-- PRIVACY TAB -->
   <section class="tab-panel" id="tab-privacy" role="tabpanel" aria-labelledby="tab-privacy-label">
     <div class="hero hero-sm">
       <p class="eyebrow">Privacy</p>
@@ -436,7 +422,7 @@
       </div>
       <div class="privacy-card">
         <h3>No Tracking</h3>
-        <p>No analytics, no cookies, no fingerprinting. WordsAnalyser does not track you.</p>
+        <p>No analytics, no cookies, no fingerprinting. WordsAnalyser does not track you. Your theme preference is the only thing stored (in <code>localStorage</code>) and it never leaves your device.</p>
       </div>
       <div class="privacy-card">
         <h3>Full Control</h3>
@@ -450,6 +436,7 @@
       <p>WordsAnalyser is a client-side text analysis tool. All file parsing, text analysis, and export happen locally in your web browser. No user data is transmitted to any server. No uploaded files, text content, or analysis results are stored by WordsAnalyser beyond the current browser session.</p>
       <p>Because processing is entirely local, WordsAnalyser cannot access, view, or retain your documents. This is not a promise — it is a technical property of the software.</p>
       <p>Fonts are loaded from Google Fonts. PDF parsing uses Mozilla's PDF.js and DOCX parsing uses Mammoth.js — both loaded from public CDNs and running locally in your browser. No data is sent to these CDNs by the app; only the library code is fetched.</p>
+      <p>The only value WordsAnalyser stores locally is your chosen theme (dark or light) in your browser's <code>localStorage</code>. This is a UI preference, never transmitted, and can be cleared at any time via your browser settings.</p>
       <p>By using WordsAnalyser you agree that you are responsible for the files you process and that WordsAnalyser holds no liability for the content of files you analyse.</p>
       <p>Questions? Email <a href="mailto:privacy@wordsanalyser.app">privacy@wordsanalyser.app</a>.</p>
     </div>
@@ -457,7 +444,6 @@
 
 </main>
 
-<!-- ============ FOOTER ============ -->
 <footer class="site-footer">
   <div class="footer-top">
     <div class="footer-brand">
