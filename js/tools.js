@@ -1,4 +1,4 @@
-// language: JavaScript, file: js/tools.js
+// language: JavaScript, file: tools.js
 (function () {
   'use strict';
 
@@ -24,7 +24,7 @@
   };
 
   // ============================================================
-  // Inject Upload Button into every tool
+  // Inject Upload Button
   // ============================================================
   function injectUploadButtons() {
     const cards = panelsContainer.querySelectorAll('.tool-card');
@@ -115,7 +115,7 @@
     if (!card) return;
     
     if (activeCard) {
-      panelsContainer.appendChild(activeCard); // return old card
+      panelsContainer.appendChild(activeCard);
     }
     
     activeCard = card;
@@ -195,6 +195,84 @@
   // Runners
   // ============================================================
   const runners = {
+    readability(card) {
+      const text = getInput(card).value;
+      const words = wordsOf(text);
+      const sentences = WH.splitSentences(text);
+      
+      if (words.length === 0 || sentences.length === 0) {
+        return setOutput(card, 'Not enough text to analyse.');
+      }
+
+      const countSyllables = (word) => {
+        word = word.toLowerCase().replace(/[^a-z]/g, '');
+        if (word.length <= 3) return 1;
+        word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+        word = word.replace(/^y/, '');
+        const syllables = word.match(/[aeiouy]{1,2}/g);
+        return syllables ? syllables.length : 1;
+      };
+
+      let totalSyllables = 0;
+      words.forEach(w => { totalSyllables += countSyllables(w); });
+
+      const totalWords = words.length;
+      const totalSentences = sentences.length;
+
+      const score = 206.835 - 1.015 * (totalWords / totalSentences) - 84.6 * (totalSyllables / totalWords);
+      
+      let grade = "";
+      if (score >= 90) grade = "5th Grade (Very Easy)";
+      else if (score >= 80) grade = "6th Grade (Easy)";
+      else if (score >= 70) grade = "7th Grade (Fairly Easy)";
+      else if (score >= 60) grade = "8th-9th Grade (Standard)";
+      else if (score >= 50) grade = "10th-12th Grade (Fairly Difficult)";
+      else if (score >= 30) grade = "College (Difficult)";
+      else grade = "College Graduate (Very Difficult)";
+
+      setOutput(card, 
+        `Flesch Reading Ease: ${score.toFixed(1)}\n` +
+        `Reading Level: ${grade}\n\n` +
+        `Total Words: ${totalWords}\n` +
+        `Total Sentences: ${totalSentences}\n` +
+        `Total Syllables: ${totalSyllables}`
+      );
+    },
+
+    sentiment(card) {
+      const text = getInput(card).value;
+      const words = wordsOf(text);
+      
+      const posWords = new Set(['good', 'great', 'awesome', 'excellent', 'happy', 'love', 'best', 'amazing', 'perfect', 'wonderful', 'yes', 'beautiful', 'nice', 'helpful', 'positive', 'like', 'win', 'success', 'fantastic', 'brilliant']);
+      const negWords = new Set(['bad', 'terrible', 'awful', 'hate', 'worst', 'sad', 'poor', 'horrible', 'negative', 'useless', 'no', 'angry', 'broken', 'fail', 'error', 'disappointed', 'boring', 'waste', 'difficult', 'problem']);
+
+      let posCount = 0;
+      let negCount = 0;
+
+      words.forEach(w => {
+        if (posWords.has(w)) posCount++;
+        if (negWords.has(w)) negCount++;
+      });
+
+      const total = posCount + negCount;
+      let tone = "Neutral";
+      let confidence = 0;
+
+      if (total > 0) {
+        if (posCount > negCount) tone = "Positive";
+        else if (negCount > posCount) tone = "Negative";
+        confidence = Math.max(posCount, negCount) / total * 100;
+      }
+
+      setOutput(card,
+        `Overall Tone: ${tone}\n` +
+        `Confidence: ${confidence.toFixed(0)}%\n\n` +
+        `Positive Words: ${posCount}\n` +
+        `Negative Words: ${negCount}\n` +
+        `Total Words: ${words.length}`
+      );
+    },
+
     case(card, action) {
       const input = getInput(card).value;
       let out = '';
@@ -315,11 +393,14 @@
     statistics(card) {
       if (!window.Analyzer) return setOutput(card, 'Analyzer not ready.');
       const m = window.Analyzer.analyze(getInput(card).value);
-      setOutput(card, ['Words: ' + formatNumber(m.words), 'Characters: ' + formatNumber(m.chars), 'Sentences: ' + formatNumber(m.sentences), 'Paragraphs: ' + formatNumber(m.paragraphs), 'Avg word length: ' + m.avgWordLen, 'Reading time: ' + formatDuration(m.readingTime)].join('\n'));
+      setOutput(card, [
+        'Words: ' + formatNumber(m.words), 'Characters: ' + formatNumber(m.chars),
+        'Sentences: ' + formatNumber(m.sentences), 'Paragraphs: ' + formatNumber(m.paragraphs),
+        'Avg word length: ' + m.avgWordLen, 'Reading time: ' + formatDuration(m.readingTime)
+      ].join('\n'));
     },
   };
 
-  // Document-level click delegation (works inside modal)
   document.addEventListener('click', function (e) {
     const runBtn = e.target.closest('.tool-run');
     if (runBtn) {
@@ -345,6 +426,6 @@
 
   injectUploadButtons();
   bindLiveInputs();
-  console.log('[WordsAnalyser] tools.js loaded — 14 tools wired with modals & uploads');
+  console.log('[WordsAnalyser] tools.js loaded — 16 tools wired with modals & uploads');
   window.Tools = { runners };
 })();
