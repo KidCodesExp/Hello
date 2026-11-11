@@ -6,24 +6,31 @@
 <title>Lumen — Word Analyzer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="styles.css" />
 </head>
 <body data-switch-effect="flip" data-touch-effect="ripple">
 
-<div class="ambient" aria-hidden="true">
-  <span class="orb orb-1"></span>
-  <span class="orb orb-2"></span>
-  <span class="orb orb-3"></span>
+<div class="backdrop" aria-hidden="true">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <div class="grid-floor"></div>
+  <div class="horizon"></div>
+  <div class="vignette"></div>
+  <div class="scanline"></div>
 </div>
 
-<header class="topbar glass" role="banner">
+<header class="topbar slab" role="banner">
   <div class="brand">
     <span class="brand-mark" aria-hidden="true">
-      <svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 12h16M12 4v16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      <span class="brand-ring"></span>
+      <span class="brand-core"></span>
     </span>
-    <span class="brand-name">Lumen</span>
-    <span class="brand-sub">Word Analyzer</span>
+    <div class="brand-text">
+      <span class="brand-name">LUMEN</span>
+      <span class="brand-sub">Word Analyzer · v3D</span>
+    </div>
   </div>
 
   <nav class="top-actions" aria-label="Primary">
@@ -42,7 +49,8 @@
 
 <main class="layout" id="layout">
 
-  <section class="input-panel glass tilt" data-tilt aria-label="Text input">
+  <section class="input-panel slab brackets tilt" data-tilt data-z="40" aria-label="Text input">
+    <span class="panel-rim" aria-hidden="true"></span>
     <div class="panel-head">
       <h2>Source</h2>
       <div class="panel-head-actions">
@@ -70,27 +78,28 @@
 
     <div class="panel-foot">
       <span class="status" id="status">Ready</span>
+      <span class="status-glyph" aria-hidden="true">◈ LIVE</span>
     </div>
   </section>
 
   <section class="dashboard" aria-label="Analysis dashboard">
     <div class="metric-grid">
-      <article class="metric-card glass tilt" data-tilt>
+      <article class="metric-card slab brackets tilt" data-tilt data-z="15">
         <span class="metric-label">Words</span>
         <span class="metric-value" id="mWords">0</span>
         <span class="metric-sub" id="mUnique">0 unique</span>
       </article>
-      <article class="metric-card glass tilt" data-tilt>
+      <article class="metric-card slab brackets tilt" data-tilt data-z="28">
         <span class="metric-label">Characters</span>
         <span class="metric-value" id="mChars">0</span>
         <span class="metric-sub" id="mCharsNS">0 without spaces</span>
       </article>
-      <article class="metric-card glass tilt" data-tilt>
+      <article class="metric-card slab brackets tilt" data-tilt data-z="22">
         <span class="metric-label">Sentences</span>
         <span class="metric-value" id="mSentences">0</span>
         <span class="metric-sub" id="mParagraphs">0 paragraphs</span>
       </article>
-      <article class="metric-card glass tilt" data-tilt>
+      <article class="metric-card slab brackets tilt" data-tilt data-z="34">
         <span class="metric-label">Reading</span>
         <span class="metric-value" id="mReading">0s</span>
         <span class="metric-sub" id="mSpeaking">0s speaking</span>
@@ -98,11 +107,11 @@
     </div>
 
     <div class="metric-row">
-      <article class="metric-card glass tilt wide" data-tilt>
+      <article class="metric-card slab brackets tilt wide" data-tilt data-z="20">
         <span class="metric-label">Top Keywords</span>
         <div class="keywords" id="keywords"><span class="empty">—</span></div>
       </article>
-      <article class="metric-card glass tilt" data-tilt>
+      <article class="metric-card slab brackets tilt" data-tilt data-z="32">
         <span class="metric-label">Sentiment</span>
         <div class="sentiment">
           <span class="sentiment-dot" id="sentDot"></span>
@@ -112,7 +121,7 @@
       </article>
     </div>
 
-    <article class="metric-card glass tilt full" data-tilt>
+    <article class="metric-card slab brackets tilt full" data-tilt data-z="18">
       <span class="metric-label">Readability · Flesch</span>
       <div class="read-bar"><span class="read-fill" id="readFill"></span></div>
       <div class="read-meta">
@@ -124,7 +133,7 @@
 
 </main>
 
-<aside class="effects-panel glass" id="effectsPanel" aria-label="Effect selector">
+<aside class="effects-panel slab" id="effectsPanel" aria-label="Effect selector">
   <button class="effects-toggle" id="effectsToggle" aria-expanded="false" aria-controls="effectsBody">
     <span class="fx-dot" aria-hidden="true"></span>
     <span>Effects</span>
@@ -139,7 +148,7 @@
 
 <div class="modal" id="historyModal" role="dialog" aria-modal="true"
      aria-labelledby="historyTitle" hidden>
-  <div class="modal-card glass">
+  <div class="modal-card slab">
     <header class="modal-head">
       <h2 id="historyTitle">History</h2>
       <button class="icon-btn" id="historyClose" aria-label="Close history">✕</button>
@@ -166,15 +175,13 @@
       setTimeout(() => t.remove(), 5000);
     }
   });
-  window.addEventListener('unhandledrejection', (e) => {
-    console.error('[Lumen] rejection:', e.reason);
-  });
+  window.addEventListener('unhandledrejection', (e) => console.error('[Lumen] rejection:', e.reason));
   window.addEventListener('DOMContentLoaded', () => {
-    console.log('[Lumen] DOM ready');
-    console.log('[Lumen] pdfjsLib?', typeof window.pdfjsLib);
-    console.log('[Lumen] mammoth?', typeof window.mammoth);
-    console.log('[Lumen] Tesseract?', typeof window.Tesseract);
-    setTimeout(() => console.log('[Lumen] app instance:', window.__lumen), 100);
+    console.log('[Lumen] DOM ready',
+      '· pdfjs:', typeof window.pdfjsLib,
+      '· mammoth:', typeof window.mammoth,
+      '· tesseract:', typeof window.Tesseract);
+    setTimeout(() => console.log('[Lumen] app:', window.__lumen), 100);
   });
 </script>
 <script src="app.js"></script>
