@@ -357,6 +357,26 @@
         </div>
         <div class="tool-output" data-empty="true">Statistics appear here</div>
       </article>
+      
+      <!-- 7. FIND & REPLACE -->
+      <article class="tool-card" data-tool="findreplace">
+        <header class="tool-head"><h3>Find & Replace</h3><p>Replace words with precision</p></header>
+        <textarea class="tool-input" placeholder="Paste your text here..."></textarea>
+        <div class="field-row">
+          <input type="text" class="tool-field" data-field="find" placeholder="Find this word...">
+          <input type="text" class="tool-field" data-field="replace" placeholder="Replace with...">
+        </div>
+        <div class="check-list" style="flex-direction: row; flex-wrap: wrap; gap: 16px; margin-bottom: 4px;">
+          <label class="check-row"><input type="checkbox" data-field="matchcase"> Match case</label>
+          <label class="check-row"><input type="checkbox" data-field="wholeword"> Whole word</label>
+          <label class="check-row"><input type="checkbox" data-field="regex"> Regex</label>
+        </div>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Replace all</button>
+          <button class="btn btn-ghost tool-copy">Copy</button>
+        </div>
+        <div class="tool-output" data-empty="true">Output appears here</div>
+      </article>
 
     </div>
   </section>
