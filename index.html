@@ -405,18 +405,66 @@
     </div>
   </section>
 
-  <!-- CONTACT TAB -->
+  <!-- CONTACT TAB (Updated with Form, No Social) -->
   <section class="tab-panel" id="tab-contact" role="tabpanel" aria-labelledby="tab-contact-label">
     <div class="hero hero-sm">
       <p class="eyebrow">Contact</p>
       <h1 class="hero-title">Get in touch.</h1>
-      <p class="hero-sub">Feedback, bugs, or requests — the door is open.</p>
+      <p class="hero-sub">Feedback, bugs, or feature requests — drop a message below and it hits our inbox directly.</p>
     </div>
-    <div class="contact-grid">
-      <div class="contact-card"><h3>Email</h3><p>For questions and feedback.</p><a href="mailto:hello@wordsanalyser.app" class="contact-link">hello@wordsanalyser.app</a></div>
-      <div class="contact-card"><h3>Website</h3><p>Fully open source. Runs on GitHub Pages and Netlify.</p><span class="contact-link">wordsanalyser.app</span></div>
-      <div class="contact-card"><h3>Feedback</h3><p>Feature requests and bug reports welcome.</p><a href="mailto:feedback@wordsanalyser.app" class="contact-link">feedback@wordsanalyser.app</a></div>
-      <div class="contact-card"><h3>Social</h3><p>Follow updates.</p><div class="social-row"><a href="#" class="social-link">GitHub</a><a href="#" class="social-link">X</a><a href="#" class="social-link">LinkedIn</a></div></div>
+
+    <div class="contact-grid" style="grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));">
+      <div class="contact-card">
+        <h3>Email Us</h3>
+        <p>For direct questions or business inquiries.</p>
+        <a href="mailto:hello@wordsanalyser.app" class="contact-link">hello@wordsanalyser.app</a>
+      </div>
+      <div class="contact-card">
+        <h3>Website</h3>
+        <p>100% open source. Runs entirely in your browser.</p>
+        <span class="contact-link">wordsanalyser.app</span>
+      </div>
+    </div>
+
+    <div class="contact-form-wrap">
+      <div class="hero-sm" style="margin-bottom: 24px;">
+        <h2 class="section-title">Send Feedback</h2>
+        <p class="hint" style="margin-top: 4px;">Messages go straight to our team.</p>
+      </div>
+      
+      <!-- REPLACE THE EMAIL IN THE ACTION ATTRIBUTE BELOW -->
+      <!-- Example: action="https://formsubmit.co/ajax/yourname@gmail.com" -->
+      <form id="feedback-form" class="contact-form" action="https://formsubmit.co/ajax/YOUR_EMAIL_HERE@gmail.com" method="POST">
+        
+        <!-- These hidden inputs tell FormSubmit how to format the email -->
+        <input type="hidden" name="_template" value="table">
+        <input type="hidden" name="_subject" value="New WordsAnalyser Feedback">
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="name">Your Name</label>
+            <input type="text" id="name" name="name" placeholder="Jane Doe" required>
+          </div>
+          <div class="form-group">
+            <label for="email">Email Address</label>
+            <input type="email" id="email" name="email" placeholder="jane@example.com" required>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="subject">Subject</label>
+          <input type="text" id="subject" name="subject" placeholder="What's this about?" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="message">Message</label>
+          <textarea id="message" name="message" rows="5" placeholder="Type your feedback, bug report, or feature request here..." required></textarea>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" id="submit-btn" style="width: 100%; justify-content: center; padding: 12px;">
+          Send Message
+        </button>
+      </form>
     </div>
   </section>
 
