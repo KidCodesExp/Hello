@@ -1,332 +1,172 @@
-// language: JavaScript, file: uploader.js
-// Hardened file reader. Verbose logging, FileReader fallback, no re-entrant click.
+// language: JavaScript, file: js/utilities.js
+// All functions explicitly attached to window to prevent "Can't find variable" errors.
 
+window.$ = function (sel, root) { return (root || document).querySelector(sel); };
+window.$$ = function (sel, root) { return Array.prototype.slice.call((root || document).querySelectorAll(sel)); };
+
+window.escapeHTML = function (str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+};
+
+window.formatBytes = function (bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024, sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return (bytes / Math.pow(k, i)).toFixed(i === 0 ? 0 : 1) + ' ' + sizes[i];
+};
+
+window.formatNumber = function (n) { return Number(n || 0).toLocaleString('en-US'); };
+
+window.formatDuration = function (seconds) {
+  const s = Number(seconds || 0);
+  if (!s || s < 1) return '0s';
+  if (s < 60) return Math.ceil(s) + 's';
+  const m = Math.floor(s / 60), sec = Math.round(s % 60);
+  return sec > 0 ? m + 'm ' + sec + 's' : m + 'm';
+};
+
+window.debounce = function (fn, delay) {
+  delay = delay || 200;
+  let timer;
+  return function () {
+    const args = arguments, ctx = this;
+    clearTimeout(timer);
+    timer = setTimeout(function () { fn.apply(ctx, args); }, delay);
+  };
+};
+
+window.downloadBlob = function (content, filename, mime) {
+  mime = mime || 'text/plain';
+  const fullMime = mime + ';charset=utf-8';
+  try {
+    const blob = new Blob([content], { type: fullMime });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.style.display = 'none';
+    document.body.appendChild(a);
+    a.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+    setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 200);
+    return true;
+  } catch (err) {
+    console.error('Download failed:', err);
+    return false;
+  }
+};
+
+window.copyToClipboard = function (text) {
+  if (!text) return Promise.resolve(false);
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    return navigator.clipboard.writeText(text).then(function(){ return true; }).catch(function(){ return fallback(); });
+  }
+  return fallback();
+  function fallback() {
+    const ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    let ok = false;
+    try { ok = document.execCommand('copy'); } catch (e) {}
+    ta.remove();
+    return Promise.resolve(ok);
+  }
+};
+
+window.toast = function (message, type, duration) {
+  type = type || 'info'; duration = duration || 2600;
+  const container = document.getElementById('toast-container');
+  if (!container) return;
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = message;
+  container.appendChild(el);
+  setTimeout(function () {
+    el.classList.add('out');
+    setTimeout(function () { el.remove(); }, 280);
+  }, duration);
+};
+
+// ---- Theme ----
+const THEME_KEY = 'wordsanalyser-theme';
+
+window.initTheme = function () {
+  let stored = null;
+  try { stored = localStorage.getItem(THEME_KEY); } catch (e) {}
+  if (!stored) {
+    stored = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+  }
+  document.documentElement.setAttribute('data-theme', stored);
+  return stored;
+};
+
+window.toggleTheme = function () {
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  const next = current === 'dark' ? 'light' : 'dark';
+  document.documentElement.setAttribute('data-theme', next);
+  try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+  return next;
+};
+
+// ---- Ripples ----
+window.attachRipples = function (root) {
+  root = root || document;
+  const selector = '.btn, .nav-btn, .quick-card, .tool-run, .file-remove, .back-to-top, .theme-toggle, .menu-toggle, .footer-link, .dropdown-menu button';
+  root.querySelectorAll(selector).forEach(function (el) {
+    if (el.dataset.ripple === 'on') return;
+    el.dataset.ripple = 'on';
+    el.addEventListener('pointerdown', function (e) {
+      if (e.pointerType === 'mouse' && e.button !== 0) return;
+      const rect = el.getBoundingClientRect();
+      const size = Math.max(rect.width, rect.height) * 1.1;
+      const x = (e.clientX || rect.left + rect.width / 2) - rect.left - size / 2;
+      const y = (e.clientY || rect.top + rect.height / 2) - rect.top - size / 2;
+      const ripple = document.createElement('span');
+      ripple.className = 'ripple';
+      ripple.style.width = ripple.style.height = size + 'px';
+      ripple.style.left = x + 'px'; ripple.style.top = y + 'px';
+      el.appendChild(ripple);
+      setTimeout(function () { ripple.remove(); }, 650);
+    });
+  });
+};
+
+// ---- WordHelpers ----
 (function () {
-  'use strict';
-
-  const LOG = '[WordsAnalyser/uploader]';
-  console.log(LOG, 'loading');
-
-  const SUPPORTED_TEXT = ['txt', 'md', 'csv', 'json', 'xml', 'html', 'htm', 'css', 'js', 'rtf', 'log'];
-  const SUPPORTED = new Set(SUPPORTED_TEXT.concat(['pdf', 'docx', 'doc']));
-  const MAX_BYTES = 100 * 1024 * 1024;
-
-  // ---- DOM (resolved with defensive fallbacks; some may be null on odd builds)
-  const zone           = document.getElementById('upload-zone');
-  const input          = document.getElementById('file-input');
-  const fileList       = document.getElementById('file-list');
-  const clearBtn       = document.getElementById('clear-files');
-  const progressWrap   = document.getElementById('upload-progress-wrap');
-  const progressFill   = document.getElementById('upload-progress-fill');
-  const progressLabel  = document.getElementById('upload-progress-label');
-
-  if (!zone || !input) {
-    console.error(LOG, 'FATAL — upload zone or file input missing from DOM');
-    return;
+  let WORD_RE, NON_WORD_CHAR_RE, unicodeSupported = false;
+  try {
+    WORD_RE = new RegExp("[\\p{L}\\p{N}][\\p{L}\\p{N}'’\\-]*", 'gu');
+    if (!WORD_RE.test('café')) throw new Error();
+    NON_WORD_CHAR_RE = new RegExp('[^\\p{L}\\p{N}]', 'gu');
+    unicodeSupported = true;
+  } catch (e) {
+    WORD_RE = /[A-Za-z0-9][A-Za-z0-9'’\-]*/g;
+    NON_WORD_CHAR_RE = /[^A-Za-z0-9]/g;
+    unicodeSupported = false;
   }
 
-  let nextId = 1;
-  let uploading = false;
-
-  // ---- Utility: get textarea fresh each time (never stale)
-  function getAnalysisInput() {
-    return document.getElementById('analysis-input');
-  }
-
-  // ---- Public API
-  function getFiles() { return window.AppState.files.slice(); }
-
-  function clearAll() {
-    if (window.AppState.files.length === 0) return;
-    window.AppState.files = [];
-    renderFileList();
-    const ta = getAnalysisInput();
-    if (ta) ta.value = '';
-    if (window.Analyzer) window.Analyzer.run('');
-    toast('All files cleared', 'info');
-    console.log(LOG, 'cleared all');
-  }
-
-  function removeFile(id) {
-    const idx = window.AppState.files.findIndex(function (f) { return f.id === id; });
-    if (idx === -1) return;
-    window.AppState.files.splice(idx, 1);
-    renderFileList();
-  }
-
-  // ============================================================
-  // Zone click — non-recursive
-  // ============================================================
-  zone.addEventListener('click', function (e) {
-    // Guard: ignore synthetic clicks from inside the zone itself (input bubbles here)
-    if (e.target === input) return;
-    e.preventDefault();
-    e.stopPropagation();
-    input.click();
-  });
-
-  zone.addEventListener('keydown', function (e) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      input.click();
-    }
-  });
-
-  // ---- Drag & drop
-  ['dragenter', 'dragover'].forEach(function (ev) {
-    zone.addEventListener(ev, function (e) {
-      e.preventDefault(); e.stopPropagation();
-      zone.classList.add('dragover');
-    });
-  });
-  ['dragleave', 'drop'].forEach(function (ev) {
-    zone.addEventListener(ev, function (e) {
-      e.preventDefault(); e.stopPropagation();
-      if (ev === 'dragleave' && e.target !== zone) return;
-      zone.classList.remove('dragover');
-    });
-  });
-  zone.addEventListener('drop', function (e) {
-    const files = Array.from(e.dataTransfer.files || []);
-    console.log(LOG, 'drop:', files.length, 'file(s)');
-    if (files.length) handleFiles(files);
-  });
-
-  // ---- File picker
-  input.addEventListener('change', function (e) {
-    const files = Array.from(e.target.files || []);
-    console.log(LOG, 'picker:', files.length, 'file(s)');
-    if (files.length) handleFiles(files);
-    input.value = '';
-  });
-
-  if (clearBtn) clearBtn.addEventListener('click', clearAll);
-
-  if (fileList) {
-    fileList.addEventListener('click', function (e) {
-      const btn = e.target.closest('.file-remove');
-      if (btn) removeFile(Number(btn.dataset.id));
-    });
-  }
-
-  // ============================================================
-  // Reading
-  // ============================================================
-  function extOf(name) {
-    const parts = name.split('.');
-    return parts.length > 1 ? parts.pop().toLowerCase() : '';
-  }
-
-  // File.text() fallback via FileReader — safe on every engine
-  function readAsText(file) {
-    return new Promise(function (resolve, reject) {
-      if (typeof file.text === 'function') {
-        Promise.resolve(file.text()).then(resolve, function () { fallback(); });
-        return;
-      }
-      fallback();
-      function fallback() {
-        try {
-          const reader = new FileReader();
-          reader.onload = function () { resolve(String(reader.result || '')); };
-          reader.onerror = function () { reject(reader.error || new Error('FileReader failed')); };
-          reader.readAsText(file);
-        } catch (err) {
-          reject(err);
+  window.WordHelpers = {
+    unicodeSupported: unicodeSupported,
+    extractWords: function (text) { return text ? (String(text).match(WORD_RE) || []) : []; },
+    cleanWord: function (w) { return String(w).replace(NON_WORD_CHAR_RE, ''); },
+    splitSentences: function (text) {
+      if (!text) return [];
+      const s = String(text), result = [];
+      let start = 0;
+      for (let i = 0; i < s.length; i++) {
+        const code = s.charCodeAt(i);
+        if (code === 46 || code === 33 || code === 63) {
+          const next = i + 1 < s.length ? s.charCodeAt(i + 1) : 0;
+          if (next === 0 || next === 32 || next === 9 || next === 10 || next === 13) {
+            const chunk = s.slice(start, i + 1).trim();
+            if (chunk) result.push(chunk);
+            start = i + 1;
+          }
         }
       }
-    });
-  }
-
-  async function readFile(file, ext) {
-    if (SUPPORTED_TEXT.indexOf(ext) !== -1) return readAsText(file);
-    if (ext === 'pdf') return readPDF(file);
-    if (ext === 'docx') return readDOCX(file);
-    if (ext === 'doc') throw new Error('Legacy .doc unsupported — save as .docx first');
-    throw new Error('Unsupported type: .' + ext);
-  }
-
-  async function readPDF(file) {
-    if (typeof pdfjsLib === 'undefined') throw new Error('PDF parser failed to load');
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-    const buffer = await file.arrayBuffer();
-    const pdf = await pdfjsLib.getDocument({ data: buffer }).promise;
-    let text = '';
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const content = await page.getTextContent();
-      text += content.items.map(function (it) { return it.str; }).join(' ') + '\n\n';
+      const tail = s.slice(start).trim();
+      if (tail) result.push(tail);
+      return result;
     }
-    return text;
-  }
-
-  async function readDOCX(file) {
-    if (typeof mammoth === 'undefined') throw new Error('DOCX parser failed to load');
-    const buffer = await file.arrayBuffer();
-    const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-    return result.value;
-  }
-
-  // ============================================================
-  // Core pipeline
-  // ============================================================
-  async function handleFiles(files) {
-    if (uploading) {
-      toast('Please wait for the current batch', 'info');
-      return;
-    }
-    uploading = true;
-
-    if (progressWrap) progressWrap.hidden = false;
-    if (progressFill) progressFill.style.width = '0%';
-    if (progressLabel) progressLabel.textContent = '0%';
-
-    const total = files.length;
-    let done = 0;
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const ext = extOf(file.name);
-      console.log(LOG, 'processing', file.name, '| ext=' + ext, '| size=' + file.size);
-
-      if (!SUPPORTED.has(ext)) {
-        toast('Unsupported: .' + ext, 'error');
-        done++;
-        updateOverallProgress(done, total);
-        continue;
-      }
-      if (file.size > MAX_BYTES) {
-        toast(file.name + ': too large (max 100 MB)', 'error');
-        done++;
-        updateOverallProgress(done, total);
-        continue;
-      }
-
-      const item = {
-        id: nextId++,
-        name: file.name,
-        size: file.size,
-        ext: ext,
-        text: '',
-        status: 'reading'
-      };
-      window.AppState.files.push(item);
-      renderFileList();
-
-      let text = '';
-      try {
-        text = await readFile(file, ext);
-        console.log(LOG, 'read OK:', file.name, '| chars=' + (text ? text.length : 0));
-      } catch (err) {
-        item.status = 'error';
-        item.text = '';
-        renderFileList();
-        toast(file.name + ': ' + (err.message || 'read failed'), 'error');
-        console.error(LOG, 'read failed:', file.name, err);
-        done++;
-        updateOverallProgress(done, total);
-        continue;
-      }
-
-      item.text = text;
-      item.status = 'success';
-      renderFileList();
-
-      if (!text || !text.trim().length) {
-        toast(file.name + ': file is empty', 'info');
-        done++;
-        updateOverallProgress(done, total);
-        continue;
-      }
-
-      // ---- Feed the analyzer
-      const ta = getAnalysisInput();
-      if (!ta) {
-        console.error(LOG, 'analysis textarea not found in DOM');
-        toast('Analysis area missing', 'error');
-        done++;
-        updateOverallProgress(done, total);
-        continue;
-      }
-
-      const combined = ta.value.trim().length > 0
-        ? ta.value + '\n\n' + text
-        : text;
-      ta.value = combined;
-
-      // Primary: direct call
-      if (window.Analyzer && typeof window.Analyzer.run === 'function') {
-        try {
-          const result = window.Analyzer.run(combined);
-          console.log(LOG, 'analyzer ran | words=' + (result ? result.words : 'null'));
-        } catch (err) {
-          console.error(LOG, 'analyzer.run threw:', err);
-        }
-      } else {
-        console.warn(LOG, 'window.Analyzer not available — analysis skipped');
-        toast('Analyzer not loaded', 'error');
-      }
-
-      // Backup: fire input event so any listener catches it
-      try {
-        ta.dispatchEvent(new Event('input', { bubbles: true }));
-      } catch (err) {
-        console.error(LOG, 'dispatchEvent failed:', err);
-      }
-
-      // ---- Session history
-      if (window.Statistics && typeof window.Statistics.recordAnalysis === 'function') {
-        try { window.Statistics.recordAnalysis(item); }
-        catch (err) { console.error(LOG, 'recordAnalysis failed:', err); }
-      }
-
-      toast(file.name + ' loaded', 'success');
-      done++;
-      updateOverallProgress(done, total);
-    }
-
-    uploading = false;
-    setTimeout(function () {
-      if (progressWrap) progressWrap.hidden = true;
-    }, 800);
-  }
-
-  function updateOverallProgress(done, total) {
-    const pct = Math.round((done / total) * 100);
-    if (progressFill) progressFill.style.width = pct + '%';
-    if (progressLabel) progressLabel.textContent = pct + '%';
-  }
-
-  // ============================================================
-  // Render
-  // ============================================================
-  function renderFileList() {
-    if (!fileList) return;
-    const files = window.AppState.files;
-    if (files.length === 0) {
-      fileList.innerHTML = '';
-      if (clearBtn) clearBtn.hidden = true;
-      return;
-    }
-    if (clearBtn) clearBtn.hidden = false;
-    fileList.innerHTML = files.map(function (f) {
-      const statusClass = f.status === 'success' ? 'success' : f.status === 'error' ? 'error' : '';
-      const statusText = f.status === 'reading' ? 'Reading…' : f.status === 'success' ? 'Ready' : 'Error';
-      return '<div class="file-item">' +
-        '<span class="file-ext">' + escapeHTML(f.ext || '?') + '</span>' +
-        '<div class="file-meta">' +
-          '<div class="file-name">' + escapeHTML(f.name) + '</div>' +
-          '<div class="file-size">' + formatBytes(f.size) + '</div>' +
-        '</div>' +
-        '<span class="file-status ' + statusClass + '">' + statusText + '</span>' +
-        '<button class="file-remove" data-id="' + f.id + '" aria-label="Remove">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg>' +
-        '</button>' +
-      '</div>';
-    }).join('');
-  }
-
-  window.Uploader = { getFiles: getFiles, clearAll: clearAll, removeFile: removeFile };
-  console.log(LOG, 'ready — 12 extensions supported');
+  };
+  console.log('[WordsAnalyser] utilities.js loaded — ' + (unicodeSupported ? 'Unicode' : 'ASCII'));
 })();
+
+window.AppState = window.AppState || { files: [], analyses: [] };
