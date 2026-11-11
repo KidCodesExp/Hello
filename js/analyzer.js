@@ -1,4 +1,4 @@
-// language: JavaScript, file: js/analyzer.js
+// language: JavaScript, file: analyzer.js
 (function () {
   'use strict';
 
@@ -130,22 +130,70 @@
     }
   }
 
+  // ---- Export Builders ----
+  function metricsToText(m) {
+    return [
+      'WordsAnalyser Report', 'Generated: ' + new Date().toLocaleString(), '',
+      `Total Words: ${m.words}`, `Total Characters: ${m.chars}`, `Characters (no spaces): ${m.charsNoSpaces}`,
+      `Sentences: ${m.sentences}`, `Paragraphs: ${m.paragraphs}`, `Average Word Length: ${m.avgWordLen}`,
+      `Average Sentence Length: ${m.avgSentenceLen}`, `Reading Time: ${formatDuration(m.readingTime)}`,
+      `Speaking Time: ${formatDuration(m.speakingTime)}`, `Unique Words: ${m.uniqueWords}`,
+      `Longest Word: ${m.longestWord}`, `Shortest Word: ${m.shortestWord}`, '', 'Top Words:',
+      ...m.topWords.map((t, i) => `  ${i + 1}. ${t.word} — ${t.count}× (${t.percent}%)`),
+    ].join('\n');
+  }
+
+  function metricsToCSV(m) {
+    const rows = [
+      ['Metric', 'Value'], ['Total Words', m.words], ['Total Characters', m.chars],
+      ['Characters (no spaces)', m.charsNoSpaces], ['Sentences', m.sentences], ['Paragraphs', m.paragraphs],
+      ['Average Word Length', m.avgWordLen], ['Average Sentence Length', m.avgSentenceLen],
+      ['Reading Time (s)', m.readingTime], ['Speaking Time (s)', m.speakingTime],
+      ['Unique Words', m.uniqueWords], ['Longest Word', m.longestWord], ['Shortest Word', m.shortestWord],
+      [], ['Rank', 'Word', 'Count', 'Percent'],
+      ...m.topWords.map((t, i) => [i + 1, t.word, t.count, t.percent + '%']),
+    ];
+    return rows.map(r => r.map(c => {
+      const s = String(c ?? '');
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    }).join(',')).join('\n');
+  }
+
+  function metricsToJSON(m) {
+    return JSON.stringify({
+      generatedAt: new Date().toISOString(),
+      metrics: {
+        words: m.words, chars: m.chars, charsNoSpaces: m.charsNoSpaces,
+        sentences: m.sentences, paragraphs: m.paragraphs, avgWordLen: m.avgWordLen,
+        avgSentenceLen: m.avgSentenceLen, readingTimeSeconds: m.readingTime,
+        speakingTimeSeconds: m.speakingTime, uniqueWords: m.uniqueWords,
+        longestWord: m.longestWord, shortestWord: m.shortestWord,
+        topWords: m.topWords.map(t => ({ word: t.word, count: t.count, percent: t.percent })),
+      }
+    }, null, 2);
+  }
+
+  function metricsToMD(m) {
+    let md = `# WordsAnalyser Report\n\n*Generated: ${new Date().toLocaleString()}*\n\n`;
+    md += `## Overview\n- **Total Words:** ${m.words}\n- **Total Characters:** ${m.chars}\n- **Characters (no spaces):** ${m.charsNoSpaces}\n- **Sentences:** ${m.sentences}\n- **Paragraphs:** ${m.paragraphs}\n\n`;
+    md += `## Complexity\n- **Average Word Length:** ${m.avgWordLen}\n- **Average Sentence Length:** ${m.avgSentenceLen}\n- **Reading Time:** ${formatDuration(m.readingTime)}\n- **Speaking Time:** ${formatDuration(m.speakingTime)}\n\n`;
+    md += `## Vocabulary\n- **Unique Words:** ${m.uniqueWords}\n- **Longest Word:** ${m.longestWord}\n- **Shortest Word:** ${m.shortestWord}\n\n`;
+    md += `## Top Words\n| Rank | Word | Count | Percent |\n| --- | --- | --- | --- |\n`;
+    m.topWords.forEach((t, i) => { md += `| ${i+1} | ${t.word} | ${t.count} | ${t.percent}% |\n`; });
+    return md;
+  }
+
   function exportReport(format) {
     const m = lastMetrics;
     if (!m) return toast('Nothing to export yet', 'error');
     let content, filename, mime;
     
-    if (format === 'txt') {
-      content = 'Words: ' + m.words + '\nChars: ' + m.chars + '\nSentences: ' + m.sentences;
-      filename = 'wordsanalyser-report.txt'; mime = 'text/plain';
-    } else if (format === 'csv') {
-      content = 'Metric,Value\nWords,' + m.words + '\nChars,' + m.chars;
-      filename = 'wordsanalyser-report.csv'; mime = 'text/csv';
-    } else if (format === 'json') {
-      content = JSON.stringify(m, null, 2);
-      filename = 'wordsanalyser-report.json'; mime = 'application/json';
-    }
-    
+    if (format === 'txt') { content = metricsToText(m); filename = 'wordsanalyser-report.txt'; mime = 'text/plain'; }
+    else if (format === 'csv') { content = metricsToCSV(m); filename = 'wordsanalyser-report.csv'; mime = 'text/csv'; }
+    else if (format === 'json') { content = metricsToJSON(m); filename = 'wordsanalyser-report.json'; mime = 'application/json'; }
+    else if (format === 'md') { content = metricsToMD(m); filename = 'wordsanalyser-report.md'; mime = 'text/markdown'; }
+    else { return toast('Unknown format', 'error'); }
+
     const ok = downloadBlob(content, filename, mime);
     toast(ok ? 'Report downloaded' : 'Download failed', ok ? 'success' : 'error');
   }
@@ -157,7 +205,7 @@
     
     if (copyBtn) copyBtn.addEventListener('click', () => {
       if (!lastMetrics) return;
-      copyToClipboard(JSON.stringify(lastMetrics, null, 2)).then(ok => toast(ok ? 'Copied' : 'Failed', ok ? 'success' : 'error'));
+      copyToClipboard(metricsToText(lastMetrics)).then(ok => toast(ok ? 'Copied' : 'Failed', ok ? 'success' : 'error'));
     });
 
     if (resetBtn) resetBtn.addEventListener('click', () => { if(input) input.value = ''; run(''); });
@@ -174,7 +222,6 @@
     }
 
     run(input ? input.value : '');
-    console.log('[WordsAnalyser] Analyzer API ready');
   }
 
   window.Analyzer = { run, analyze, getLast: () => lastMetrics };
