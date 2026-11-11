@@ -1,33 +1,50 @@
 // language: JavaScript, file: analyzer.js
-// Analysis engine + rendering + export
+// Analysis engine + rendering + export. Runs on init so state is always valid.
 
 (function () {
-  const input = $('#analysis-input');
-  const statsGrid = $('#stats-grid');
-  const freqTable = $('#freq-table');
-  const copyBtn = $('#analysis-copy');
-  const resetBtn = $('#analysis-reset');
-  const downloadToggle = $('#download-toggle');
-  const downloadDropdown = $('#download-dropdown');
+  // ---- Feature-detected regexes (older engines lack \p{L} and lookbehind)
+  let WORD_RE, SPLIT_SENTENCES;
+  try {
+    WORD_RE = new RegExp("\\b[\\p{L}\\p{N}'’\\-]+\\b", 'gu');
+    if (!'test'.match(WORD_RE)) throw new Error();
+  } catch {
+    WORD_RE = /\b[A-Za-z0-9'’\-]+\b/g;
+  }
+  try {
+    SPLIT_SENTENCES = (t) => t.split(/(?<=[.!?])\s+/);
+    if (SPLIT_SENTENCES('a. b').length !== 2) throw new Error();
+  } catch {
+    SPLIT_SENTENCES = (t) => t.split(/[.!?]+(?:\s+|$)/);
+  }
 
-  const STOP_WORDS = new Set(('a an the and or but if of to in on at by for with from as is are was were be been being ' +
+  const input = document.getElementById('analysis-input');
+  const statsGrid = document.getElementById('stats-grid');
+  const freqTable = document.getElementById('freq-table');
+  const pasteLive = document.getElementById('paste-live');
+  const copyBtn = document.getElementById('analysis-copy');
+  const resetBtn = document.getElementById('analysis-reset');
+  const downloadToggle = document.getElementById('download-toggle');
+  const downloadDropdown = document.getElementById('download-dropdown');
+
+  const STOP_WORDS = new Set((
+    'a an the and or but if of to in on at by for with from as is are was were be been being ' +
     'this that these those it its i you he she we they them his her their our your my ' +
     'have has had do does did not no nor so than too very can will would should could may might must ' +
-    'about over under into onto out up down off then once also just only').split(' '));
+    'about over under into onto out up down off then once also just only'
+  ).split(' '));
 
   let lastMetrics = null;
 
   function analyze(text) {
-    const raw = String(text || '');
+    const raw = String(text ?? '');
     const trimmed = raw.trim();
-    const words = trimmed.match(/\b[\p{L}\p{N}'’\-]+\b/gu) || [];
+    const words = trimmed.length ? (trimmed.match(WORD_RE) || []) : [];
     const chars = raw.length;
     const charsNoSpaces = raw.replace(/\s/g, '').length;
 
-    // Sentences: split on .!? followed by space or end
     const sentenceChunks = trimmed.length === 0
       ? []
-      : trimmed.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+      : SPLIT_SENTENCES(trimmed).filter(s => s.trim().length > 0);
     const sentences = trimmed.length === 0 ? 0 : Math.max(1, sentenceChunks.length);
 
     const paragraphs = trimmed.length === 0
@@ -37,10 +54,9 @@
     const wordCount = words.length;
     const avgWordLen = wordCount ? +(words.reduce((s, w) => s + w.length, 0) / wordCount).toFixed(2) : 0;
     const avgSentenceLen = sentences ? +(wordCount / sentences).toFixed(2) : 0;
-    const readingTime = wordCount / 200 * 60;
-    const speakingTime = wordCount / 130 * 60;
+    const readingTime = Math.round((wordCount / 200) * 60);
+    const speakingTime = Math.round((wordCount / 130) * 60);
 
-    // Frequency
     const freq = {};
     for (const w of words) {
       const key = w.toLowerCase();
@@ -58,13 +74,12 @@
         stop: STOP_WORDS.has(word),
       }));
 
-    // Longest / shortest (letters only, non-trivial)
     let longest = '', shortest = '';
     for (const w of words) {
-      const clean = w.replace(/[^\p{L}\p{N}]/gu, '');
+      const clean = w.replace(/[^\p{L}\p{N}]/gu, '') || w;
       if (!clean) continue;
-      if (clean.length > longest.length) longest = w;
-      if (!shortest || clean.length < shortest.length) shortest = w;
+      if (clean.length > (longest.length)) longest = w;
+      if (!shortest || clean.length < shortest.replace(/[^\p{L}\p{N}]/gu, '').length) shortest = w;
     }
 
     return {
@@ -75,8 +90,8 @@
       paragraphs,
       avgWordLen,
       avgSentenceLen,
-      readingTime: Math.round(readingTime),
-      speakingTime: Math.round(speakingTime),
+      readingTime,
+      speakingTime,
       uniqueWords,
       longestWord: longest || '—',
       shortestWord: shortest || '—',
@@ -90,6 +105,7 @@
     lastMetrics = m;
     renderStats(m);
     renderFreq(m);
+    renderPasteLive(m);
   }
 
   function renderStats(m) {
@@ -119,14 +135,19 @@
     freqTable.innerHTML = m.topWords.map((t, i) => `
       <div class="freq-row">
         <span class="freq-rank">#${i + 1}</span>
-        <span class="freq-word">${escapeHTML(t.word)}${t.stop ? '' : ''}</span>
+        <span class="freq-word">${escapeHTML(t.word)}</span>
         <span class="freq-count">${t.count}×</span>
         <span class="freq-pct">${t.percent}%</span>
       </div>
     `).join('');
   }
 
-  // --- Export ---
+  function renderPasteLive(m) {
+    if (!pasteLive) return;
+    pasteLive.textContent = formatNumber(m.words) + ' words · ' + formatNumber(m.chars) + ' chars';
+  }
+
+  // ---- Report builders
   function metricsToText(m) {
     return [
       'WordsAnalyser Report',
@@ -197,47 +218,76 @@
   }
 
   function exportReport(format) {
-    if (!lastMetrics) return toast('Nothing to export yet', 'error');
-    if (format === 'txt') downloadBlob(metricsToText(lastMetrics), 'wordsanalyser-report.txt', 'text/plain');
-    if (format === 'csv') downloadBlob(metricsToCSV(lastMetrics), 'wordsanalyser-report.csv', 'text/csv');
-    if (format === 'json') downloadBlob(metricsToJSON(lastMetrics), 'wordsanalyser-report.json', 'application/json');
-    toast(`Report downloaded as ${format.toUpperCase()}`, 'success');
+    const m = lastMetrics;
+    if (!m) { toast('Nothing to export yet', 'error'); return; }
+
+    let content, filename, mime;
+    if (format === 'txt') { content = metricsToText(m); filename = 'wordsanalyser-report.txt'; mime = 'text/plain'; }
+    else if (format === 'csv') { content = metricsToCSV(m); filename = 'wordsanalyser-report.csv'; mime = 'text/csv'; }
+    else if (format === 'json') { content = metricsToJSON(m); filename = 'wordsanalyser-report.json'; mime = 'application/json'; }
+    else { toast('Unknown format', 'error'); return; }
+
+    const ok = downloadBlob(content, filename, mime);
+    toast(ok ? `Report downloaded as ${format.toUpperCase()}` : 'Download failed', ok ? 'success' : 'error');
   }
 
-  // --- Event wiring ---
-  input.addEventListener('input', debounce(() => run(input.value), 120));
+  // ---- Event wiring
+  if (input) {
+    input.addEventListener('input', debounce(() => run(input.value), 100));
+  }
 
-  copyBtn.addEventListener('click', async () => {
-    if (!lastMetrics) return toast('Nothing to copy yet', 'error');
-    const ok = await copyToClipboard(metricsToText(lastMetrics));
-    toast(ok ? 'Results copied' : 'Copy failed', ok ? 'success' : 'error');
-  });
-
-  resetBtn.addEventListener('click', () => {
-    input.value = '';
-    run('');
-    toast('Analysis reset', 'info');
-  });
-
-  downloadToggle.addEventListener('click', e => {
-    e.stopPropagation();
-    const open = downloadDropdown.classList.toggle('open');
-    downloadToggle.setAttribute('aria-expanded', String(open));
-  });
-  downloadDropdown.querySelectorAll('[data-export]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      exportReport(btn.dataset.export);
-      downloadDropdown.classList.remove('open');
+  if (copyBtn) {
+    copyBtn.addEventListener('click', async () => {
+      if (!lastMetrics) return toast('Nothing to copy yet', 'error');
+      const ok = await copyToClipboard(metricsToText(lastMetrics));
+      toast(ok ? 'Results copied' : 'Copy failed', ok ? 'success' : 'error');
     });
-  });
-  document.addEventListener('click', e => {
-    if (!downloadDropdown.contains(e.target)) downloadDropdown.classList.remove('open');
-  });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      if (input) input.value = '';
+      run('');
+      toast('Analysis reset', 'info');
+    });
+  }
+
+  if (downloadToggle && downloadDropdown) {
+    downloadToggle.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const open = downloadDropdown.classList.toggle('open');
+      downloadToggle.setAttribute('aria-expanded', String(open));
+    });
+
+    downloadDropdown.querySelectorAll('[data-export]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        exportReport(btn.dataset.export);
+        downloadDropdown.classList.remove('open');
+        downloadToggle.setAttribute('aria-expanded', 'false');
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!downloadDropdown.contains(e.target)) {
+        downloadDropdown.classList.remove('open');
+        downloadToggle.setAttribute('aria-expanded', 'false');
+      }
+    });
+  }
+
+  // ---- Init: analyze empty string so lastMetrics is never null
+  run(input ? input.value : '');
 
   window.Analyzer = {
     run,
     analyze,
     getLast: () => lastMetrics,
     exportReport,
+    metricsToText,
+    metricsToCSV,
+    metricsToJSON,
   };
 })();
