@@ -1,6 +1,6 @@
 // language: JavaScript, file: analyzer.js
 // Analysis engine. No lookbehind literals. No \p{} literals.
-// All Unicode-aware regexes come from window.WordHelpers (runtime-built).
+// All Unicode-aware regexes come from window.WordHelpers (runtime-built)..
 
 (function () {
   'use strict';
