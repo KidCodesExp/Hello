@@ -1,189 +1,500 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Lumen — Word Analyzer</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
-<link rel="stylesheet" href="styles.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WordsAnalyser — Professional Text Analysis, 100% Local</title>
+  <meta name="description" content="Professional file & text analysis in your browser. 100% local, private, fast.">
+  <meta name="theme-color" content="#08080a">
+  <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/responsive.css">
 </head>
-<body data-switch-effect="flip" data-touch-effect="ripple">
+<body>
 
-<div class="backdrop" aria-hidden="true">
-  <div class="orb orb-1"></div>
-  <div class="orb orb-2"></div>
-  <div class="orb orb-3"></div>
-  <div class="grid-floor"></div>
-  <div class="horizon"></div>
-  <div class="vignette"></div>
-  <div class="scanline"></div>
+<!-- ============ STARTUP LOADER ============ -->
+<div id="startup-loader" class="startup-loader" role="status" aria-live="polite">
+  <div class="loader-brand">
+    <svg class="loader-logo" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <rect x="8" y="16" width="6" height="32" rx="1.5" fill="currentColor"/>
+      <rect x="20" y="22" width="6" height="26" rx="1.5" fill="currentColor" opacity="0.7"/>
+      <rect x="32" y="10" width="6" height="38" rx="1.5" fill="currentColor"/>
+      <rect x="44" y="18" width="6" height="30" rx="1.5" fill="currentColor" opacity="0.85"/>
+      <rect x="6" y="52" width="52" height="3" rx="1.5" fill="currentColor" opacity="0.5"/>
+    </svg>
+    <h1 class="loader-title">WordsAnalyser</h1>
+    <p class="loader-sub">Preparing your workspace</p>
+  </div>
+  <div class="loader-track"><div class="loader-fill" id="loader-fill"></div></div>
+  <div class="loader-percent" id="loader-percent">0%</div>
 </div>
 
-<header class="topbar slab" role="banner">
-  <div class="brand">
-    <span class="brand-mark" aria-hidden="true">
-      <span class="brand-ring"></span>
-      <span class="brand-core"></span>
-    </span>
-    <div class="brand-text">
-      <span class="brand-name">LUMEN</span>
-      <span class="brand-sub">Word Analyzer · v3D</span>
-    </div>
-  </div>
-
-  <nav class="top-actions" aria-label="Primary">
-    <button class="switch" id="themeSwitch" role="switch" aria-checked="true" aria-label="Dark mode">
-      <span class="switch-track"><span class="switch-thumb"></span></span>
-      <span class="switch-label">Dark</span>
-    </button>
-    <button class="switch" id="focusSwitch" role="switch" aria-checked="false" aria-label="Focus mode">
-      <span class="switch-track"><span class="switch-thumb"></span></span>
-      <span class="switch-label">Focus</span>
-    </button>
-    <button class="btn-ghost" id="historyBtn" data-magnetic aria-haspopup="dialog">History</button>
-    <button class="btn-ghost" id="saveBtn" data-magnetic>Save</button>
+<!-- ============ HEADER ============ -->
+<header class="site-header">
+  <a href="#home" class="brand" data-tab-link="home" aria-label="WordsAnalyser home">
+    <svg class="brand-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+      <rect x="8" y="16" width="6" height="32" rx="1.5" fill="currentColor"/>
+      <rect x="20" y="22" width="6" height="26" rx="1.5" fill="currentColor" opacity="0.7"/>
+      <rect x="32" y="10" width="6" height="38" rx="1.5" fill="currentColor"/>
+      <rect x="44" y="18" width="6" height="30" rx="1.5" fill="currentColor" opacity="0.85"/>
+      <rect x="6" y="52" width="52" height="3" rx="1.5" fill="currentColor" opacity="0.5"/>
+    </svg>
+    <span class="brand-name">WordsAnalyser</span>
+  </a>
+  <nav class="site-nav" role="tablist" aria-label="Main navigation">
+    <button class="nav-btn active" data-tab="home" role="tab" aria-selected="true">Home</button>
+    <button class="nav-btn" data-tab="features" role="tab" aria-selected="false">Features</button>
+    <button class="nav-btn" data-tab="contact" role="tab" aria-selected="false">Contact</button>
+    <button class="nav-btn" data-tab="privacy" role="tab" aria-selected="false">Privacy</button>
   </nav>
+  <button class="menu-toggle" id="menu-toggle" aria-label="Toggle menu" aria-expanded="false">
+    <span></span><span></span><span></span>
+  </button>
 </header>
 
-<main class="layout" id="layout">
+<!-- ============ MAIN ============ -->
+<main>
 
-  <section class="input-panel slab brackets tilt" data-tilt data-z="40" aria-label="Text input">
-    <span class="panel-rim" aria-hidden="true"></span>
-    <div class="panel-head">
-      <h2>Source</h2>
-      <div class="panel-head-actions">
-        <button class="chip" id="sampleBtn" data-magnetic>Sample</button>
-        <button class="chip" id="clearBtn" data-magnetic>Clear</button>
-      </div>
+  <!-- HOME TAB -->
+  <section class="tab-panel active" id="tab-home" role="tabpanel" aria-labelledby="tab-home-label">
+    <div class="hero">
+      <p class="eyebrow">Local · Private · Precise</p>
+      <h1 class="hero-title">Analyse text.<br><span class="muted">Own every word.</span></h1>
+      <p class="hero-sub">Drop a file or paste text. Get precise, instant, private analysis — right inside your browser. Nothing ever leaves your device.</p>
     </div>
 
-    <textarea id="textInput" class="editor"
-      placeholder="Paste, type, or drop a TXT / DOCX / PDF / JPG / PNG below…"
-      spellcheck="true" aria-label="Text to analyze"></textarea>
-
-    <div class="dropzone" id="dropzone" tabindex="0" role="button"
-         aria-label="Drop or browse files to upload">
-      <div class="dropzone-inner">
-        <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true">
-          <path d="M12 16V4m0 0 4 4m-4-4L8 8M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
-                fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Upload zone -->
+    <section class="upload-section" aria-labelledby="upload-title">
+      <h2 class="section-title" id="upload-title">Upload files</h2>
+      <div class="upload-zone" id="upload-zone" tabindex="0" role="button" aria-label="Upload files: click to browse or drop files here">
+        <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+          <path d="M12 16V4m0 0L7 9m5-5 5 5M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-        <p><strong>Drop a file</strong> or <span class="u">browse</span></p>
-        <p class="tiny">TXT · DOCX · PDF · JPG · PNG</p>
+        <p class="upload-title">Drop files here or <span class="link">browse</span></p>
+        <p class="upload-hint">TXT · MD · CSV · JSON · XML · PDF · DOCX · HTML · CSS · JS · RTF · LOG</p>
+        <input type="file" id="file-input" multiple accept=".txt,.md,.csv,.json,.xml,.pdf,.docx,.doc,.html,.htm,.css,.js,.rtf,.log" hidden>
       </div>
-      <input type="file" id="fileInput" accept=".txt,.docx,.pdf,.jpg,.jpeg,.png" hidden />
+      <div class="upload-progress-wrap" id="upload-progress-wrap" hidden>
+        <div class="upload-progress-bar"><div class="upload-progress-fill" id="upload-progress-fill"></div></div>
+        <span class="upload-progress-label" id="upload-progress-label">0%</span>
+      </div>
+      <div class="file-list" id="file-list"></div>
+      <div class="upload-actions">
+        <button class="btn btn-ghost" id="clear-files" hidden>Clear all files</button>
+      </div>
+    </section>
+
+    <!-- Direct paste textarea -->
+    <section class="paste-section" aria-labelledby="paste-title">
+      <div class="section-head">
+        <h2 class="section-title" id="paste-title">Or paste text</h2>
+        <span class="hint">Analyses in real-time as you type</span>
+      </div>
+      <textarea id="analysis-input" class="main-textarea" placeholder="Paste or type your text here..."></textarea>
+    </section>
+
+    <!-- Analysis results -->
+    <section class="analysis-section" aria-labelledby="analysis-title">
+      <div class="section-head">
+        <h2 class="section-title" id="analysis-title">Analysis</h2>
+        <div class="analysis-actions">
+          <button class="btn btn-ghost" id="analysis-copy" title="Copy results">Copy</button>
+          <button class="btn btn-ghost" id="analysis-reset" title="Reset analysis">Reset</button>
+          <div class="dropdown" id="download-dropdown">
+            <button class="btn btn-primary dropdown-toggle" id="download-toggle" aria-haspopup="true" aria-expanded="false">
+              Download report
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="dropdown-menu" role="menu">
+              <button data-export="txt" role="menuitem">TXT</button>
+              <button data-export="csv" role="menuitem">CSV</button>
+              <button data-export="json" role="menuitem">JSON</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><span class="stat-label">Words</span><span class="stat-value" data-stat="words">0</span></div>
+        <div class="stat-card"><span class="stat-label">Characters</span><span class="stat-value" data-stat="chars">0</span></div>
+        <div class="stat-card"><span class="stat-label">Chars (no spaces)</span><span class="stat-value" data-stat="charsNoSpaces">0</span></div>
+        <div class="stat-card"><span class="stat-label">Sentences</span><span class="stat-value" data-stat="sentences">0</span></div>
+        <div class="stat-card"><span class="stat-label">Paragraphs</span><span class="stat-value" data-stat="paragraphs">0</span></div>
+        <div class="stat-card"><span class="stat-label">Avg word length</span><span class="stat-value" data-stat="avgWordLen">0</span></div>
+        <div class="stat-card"><span class="stat-label">Avg sentence length</span><span class="stat-value" data-stat="avgSentenceLen">0</span></div>
+        <div class="stat-card"><span class="stat-label">Reading time</span><span class="stat-value" data-stat="readingTime">0s</span></div>
+        <div class="stat-card"><span class="stat-label">Speaking time</span><span class="stat-value" data-stat="speakingTime">0s</span></div>
+        <div class="stat-card"><span class="stat-label">Unique words</span><span class="stat-value" data-stat="uniqueWords">0</span></div>
+        <div class="stat-card"><span class="stat-label">Longest word</span><span class="stat-value stat-value-sm" data-stat="longestWord">—</span></div>
+        <div class="stat-card"><span class="stat-label">Shortest word</span><span class="stat-value stat-value-sm" data-stat="shortestWord">—</span></div>
+      </div>
+
+      <div class="freq-section">
+        <h3 class="sub-title">Most frequent words</h3>
+        <div class="freq-table" id="freq-table">
+          <p class="empty-state">Upload a file or paste text to see word frequency.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick tools -->
+    <section class="quick-tools" aria-labelledby="quick-tools-title">
+      <div class="section-head">
+        <h2 class="section-title" id="quick-tools-title">Quick tools</h2>
+        <span class="hint">14+ working utilities</span>
+      </div>
+      <div class="quick-grid">
+        <button class="quick-card" data-goto="tools" data-tool="counter">
+          <span class="quick-title">Live Counter</span><span class="quick-desc">Words, characters, sentences, paragraphs</span>
+        </button>
+        <button class="quick-card" data-goto="tools" data-tool="case">
+          <span class="quick-title">Case Converter</span><span class="quick-desc">Upper · Lower · Title · Sentence</span>
+        </button>
+        <button class="quick-card" data-goto="tools" data-tool="clean">
+          <span class="quick-title">Text Cleaning</span><span class="quick-desc">Strip HTML, URLs, and noise</span>
+        </button>
+        <button class="quick-card" data-goto="tools" data-tool="compare">
+          <span class="quick-title">Text Comparison</span><span class="quick-desc">Word-level differences between two texts</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- Recent files -->
+    <section class="recent-section" aria-labelledby="recent-title">
+      <div class="section-head">
+        <h2 class="section-title" id="recent-title">Recently analysed</h2>
+        <button class="btn btn-ghost btn-sm" id="clear-dashboard">Clear dashboard</button>
+      </div>
+      <div class="recent-list" id="recent-list">
+        <p class="empty-state">No files analysed yet this session.</p>
+      </div>
+    </section>
+  </section>
+
+  <!-- FEATURES TAB -->
+  <section class="tab-panel" id="tab-features" role="tabpanel" aria-labelledby="tab-features-label">
+    <div class="hero hero-sm">
+      <p class="eyebrow">Utilities</p>
+      <h1 class="hero-title">Every text tool.<br><span class="muted">One workspace.</span></h1>
+      <p class="hero-sub">14 fully working tools. Nothing simulated, nothing shipped as a placeholder.</p>
     </div>
 
-    <div class="panel-foot">
-      <span class="status" id="status">Ready</span>
-      <span class="status-glyph" aria-hidden="true">◈ LIVE</span>
+    <div class="tools-grid" id="tools-grid">
+
+      <!-- 1. LIVE COUNTER -->
+      <article class="tool-card" data-tool="counter">
+        <header class="tool-head"><h3>Live Counter</h3><p>Auto-updates as you type</p></header>
+        <textarea class="tool-input" data-auto placeholder="Type or paste text..."></textarea>
+        <div class="mini-stats">
+          <div><span class="mini-label">Words</span><span class="mini-value" data-mini="counter-words">0</span></div>
+          <div><span class="mini-label">Chars</span><span class="mini-value" data-mini="counter-chars">0</span></div>
+          <div><span class="mini-label">Sentences</span><span class="mini-value" data-mini="counter-sentences">0</span></div>
+          <div><span class="mini-label">Paragraphs</span><span class="mini-value" data-mini="counter-paragraphs">0</span></div>
+        </div>
+      </article>
+
+      <!-- 2. READING TIME -->
+      <article class="tool-card" data-tool="reading">
+        <header class="tool-head"><h3>Reading Time</h3><p>Based on 200 WPM read, 130 WPM speak</p></header>
+        <textarea class="tool-input" data-auto placeholder="Type or paste text..."></textarea>
+        <div class="mini-stats">
+          <div><span class="mini-label">Read</span><span class="mini-value" data-mini="reading-read">0s</span></div>
+          <div><span class="mini-label">Speak</span><span class="mini-value" data-mini="reading-speak">0s</span></div>
+          <div><span class="mini-label">Words</span><span class="mini-value" data-mini="reading-words">0</span></div>
+        </div>
+      </article>
+
+      <!-- 3. CASE CONVERTER -->
+      <article class="tool-card" data-tool="case">
+        <header class="tool-head"><h3>Case Converter</h3><p>Transform all text at once</p></header>
+        <textarea class="tool-input" placeholder="Enter text..."></textarea>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="upper">UPPER</button>
+          <button class="btn btn-primary tool-run" data-action="lower">lower</button>
+          <button class="btn btn-primary tool-run" data-action="title">Title Case</button>
+          <button class="btn btn-primary tool-run" data-action="sentence">Sentence case</button>
+          <button class="btn btn-ghost tool-copy">Copy</button>
+        </div>
+        <div class="tool-output" data-empty="true">Output appears here</div>
+      </article>
+
+      <!-- 4. REMOVE EXTRA SPACES -->
+      <article class="tool-card" data-tool="spaces">
+        <header class="tool-head"><h3>Remove Extra Spaces</h3><p>Collapse whitespace and trim lines</p></header>
+        <textarea class="tool-input" placeholder="Paste messy text..."></textarea>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Clean</button>
+          <button class="btn btn-ghost tool-copy">Copy</button>
+        </div>
+        <div class="tool-output" data-empty="true">Output appears here</div>
+      </article>
+
+      <!-- 5. REMOVE DUPLICATE LINES -->
+      <article class="tool-card" data-tool="duplines">
+        <header class="tool-head"><h3>Remove Duplicate Lines</h3><p>Keeps first occurrence of each line</p></header>
+        <textarea class="tool-input" placeholder="One item per line..."></textarea>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Deduplicate</button>
+          <button class="btn btn-ghost tool-copy">Copy</button>
+        </div>
+        <div class="tool-output" data-empty="true">Output appears here</div>
+      </article>
+
+      <!-- 6. TEXT REVERSAL -->
+      <article class="tool-card" data-tool="reverse">
+        <header class="tool-head"><h3>Text Reversal</h3><p>Reverse characters, words, or lines</p></header>
+        <textarea class="tool-input" placeholder="Enter text..."></textarea>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="chars">Reverse chars</button>
+          <button class="btn btn-primary tool-run" data-action="words">Reverse words</button>
+          <button class="btn btn-primary tool-run" data-action="lines">Reverse lines</button>
+          <button class="btn btn-ghost tool-copy">Copy</button>
+        </div>
+        <div class="tool-output" data-empty="true">Output appears here</div>
+      </article>
+
+      <!-- 7. FIND & REPLACE -->
+      <article class="tool-card" data-tool="findreplace">
+        <header class="tool-head"><h3>Find & Replace</h3><p>Replace all occurrences</p></header>
+        <textarea class="tool-input" placeholder="Text to search within..."></textarea>
+        <div class="field-row">
+          <input type="text" class="tool-field" data-field="find" placeholder="Find...">
+          <input type="text" class="tool-field" data-field="replace" placeholder="Replace with...">
+        </div>
+        <label class="check-row"><input type="checkbox" data-field="regex"> Use regex</label>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Replace all</button>
+          <button class="btn btn-ghost tool-copy">Copy</button>
+        </div>
+        <div class="tool-output" data-empty="true">Output appears here</div>
+      </article>
+
+      <!-- 8. TEXT SORTING -->
+      <article class="tool-card" data-tool="sort">
+        <header class="tool-head"><h3>Text Sorting</h3><p>Sort lines</p></header>
+        <textarea class="tool-input" placeholder="One item per line..."></textarea>
+        <div class="field-row">
+          <select class="tool-field" data-field="mode">
+            <option value="asc">A → Z</option>
+            <option value="desc">Z → A</option>
+            <option value="len-asc">Shortest first</option>
+            <option value="len-desc">Longest first</option>
+            <option value="num">Numeric</option>
+          </select>
+        </div>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Sort</button>
+          <button class="btn btn-ghost tool-copy">Copy</button>
+        </div>
+        <div class="tool-output" data-empty="true">Output appears here</div>
+      </article>
+
+      <!-- 9. TEXT CLEANING -->
+      <article class="tool-card" data-tool="clean">
+        <header class="tool-head"><h3>Text Cleaning</h3><p>Strip noise from text</p></header>
+        <textarea class="tool-input" placeholder="Paste noisy text..."></textarea>
+        <div class="check-list">
+          <label class="check-row"><input type="checkbox" data-field="html" checked> Remove HTML tags</label>
+          <label class="check-row"><input type="checkbox" data-field="urls" checked> Remove URLs</label>
+          <label class="check-row"><input type="checkbox" data-field="emails"> Remove emails</label>
+          <label class="check-row"><input type="checkbox" data-field="numbers"> Remove numbers</label>
+          <label class="check-row"><input type="checkbox" data-field="special"> Remove special characters</label>
+          <label class="check-row"><input type="checkbox" data-field="ws" checked> Normalise whitespace</label>
+        </div>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Clean</button>
+          <button class="btn btn-ghost tool-copy">Copy</button>
+        </div>
+        <div class="tool-output" data-empty="true">Output appears here</div>
+      </article>
+
+      <!-- 10. TEXT COMPARISON -->
+      <article class="tool-card tool-wide" data-tool="compare">
+        <header class="tool-head"><h3>Text Comparison</h3><p>Word-level differences between two texts</p></header>
+        <div class="compare-grid">
+          <textarea class="tool-input" data-field="a" placeholder="Text A..."></textarea>
+          <textarea class="tool-input" data-field="b" placeholder="Text B..."></textarea>
+        </div>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Compare</button>
+        </div>
+        <div class="tool-output" data-empty="true">Differences appear here</div>
+      </article>
+
+      <!-- 11. DUPLICATE WORD DETECTOR -->
+      <article class="tool-card" data-tool="dupwords">
+        <header class="tool-head"><h3>Duplicate Word Detector</h3><p>Find repeated words</p></header>
+        <textarea class="tool-input" placeholder="Enter text..."></textarea>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Detect</button>
+          <button class="btn btn-ghost tool-copy">Copy</button>
+        </div>
+        <div class="tool-output" data-empty="true">Duplicates appear here</div>
+      </article>
+
+      <!-- 12. KEYWORD DENSITY -->
+      <article class="tool-card" data-tool="density">
+        <header class="tool-head"><h3>Keyword Density</h3><p>Check a keyword's frequency</p></header>
+        <textarea class="tool-input" placeholder="Enter text..."></textarea>
+        <div class="field-row">
+          <input type="text" class="tool-field" data-field="keyword" placeholder="Keyword...">
+        </div>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Check</button>
+        </div>
+        <div class="tool-output" data-empty="true">Density appears here</div>
+      </article>
+
+      <!-- 13. MOST USED WORDS -->
+      <article class="tool-card" data-tool="mostused">
+        <header class="tool-head"><h3>Most Used Words</h3><p>Top 20 words with counts</p></header>
+        <textarea class="tool-input" placeholder="Enter text..."></textarea>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Analyse</button>
+          <button class="btn btn-ghost tool-copy">Copy</button>
+        </div>
+        <div class="tool-output" data-empty="true">Top words appear here</div>
+      </article>
+
+      <!-- 14. TEXT STATISTICS -->
+      <article class="tool-card" data-tool="statistics">
+        <header class="tool-head"><h3>Text Statistics</h3><p>Full statistical breakdown</p></header>
+        <textarea class="tool-input" placeholder="Enter text..."></textarea>
+        <div class="tool-actions">
+          <button class="btn btn-primary tool-run" data-action="run">Compute</button>
+        </div>
+        <div class="tool-output" data-empty="true">Statistics appear here</div>
+      </article>
+
     </div>
   </section>
 
-  <section class="dashboard" aria-label="Analysis dashboard">
-    <div class="metric-grid">
-      <article class="metric-card slab brackets tilt" data-tilt data-z="15">
-        <span class="metric-label">Words</span>
-        <span class="metric-value" id="mWords">0</span>
-        <span class="metric-sub" id="mUnique">0 unique</span>
-      </article>
-      <article class="metric-card slab brackets tilt" data-tilt data-z="28">
-        <span class="metric-label">Characters</span>
-        <span class="metric-value" id="mChars">0</span>
-        <span class="metric-sub" id="mCharsNS">0 without spaces</span>
-      </article>
-      <article class="metric-card slab brackets tilt" data-tilt data-z="22">
-        <span class="metric-label">Sentences</span>
-        <span class="metric-value" id="mSentences">0</span>
-        <span class="metric-sub" id="mParagraphs">0 paragraphs</span>
-      </article>
-      <article class="metric-card slab brackets tilt" data-tilt data-z="34">
-        <span class="metric-label">Reading</span>
-        <span class="metric-value" id="mReading">0s</span>
-        <span class="metric-sub" id="mSpeaking">0s speaking</span>
-      </article>
+  <!-- CONTACT TAB -->
+  <section class="tab-panel" id="tab-contact" role="tabpanel" aria-labelledby="tab-contact-label">
+    <div class="hero hero-sm">
+      <p class="eyebrow">Contact</p>
+      <h1 class="hero-title">Get in touch.</h1>
+      <p class="hero-sub">Feedback, bugs, or requests — the door is open.</p>
     </div>
 
-    <div class="metric-row">
-      <article class="metric-card slab brackets tilt wide" data-tilt data-z="20">
-        <span class="metric-label">Top Keywords</span>
-        <div class="keywords" id="keywords"><span class="empty">—</span></div>
-      </article>
-      <article class="metric-card slab brackets tilt" data-tilt data-z="32">
-        <span class="metric-label">Sentiment</span>
-        <div class="sentiment">
-          <span class="sentiment-dot" id="sentDot"></span>
-          <span class="metric-value small" id="mSentiment">Neutral</span>
-        </div>
-        <span class="metric-sub" id="sentScore">Score 0</span>
-      </article>
-    </div>
-
-    <article class="metric-card slab brackets tilt full" data-tilt data-z="18">
-      <span class="metric-label">Readability · Flesch</span>
-      <div class="read-bar"><span class="read-fill" id="readFill"></span></div>
-      <div class="read-meta">
-        <span id="readScore">0</span>
-        <span id="readGrade">Grade —</span>
+    <div class="contact-grid">
+      <div class="contact-card">
+        <h3>Email</h3>
+        <p>For questions and feedback.</p>
+        <a href="mailto:hello@wordsanalyser.app" class="contact-link">hello@wordsanalyser.app</a>
       </div>
-    </article>
+      <div class="contact-card">
+        <h3>Website</h3>
+        <p>Fully open source. Runs on GitHub Pages and Netlify.</p>
+        <span class="contact-link">wordsanalyser.app</span>
+      </div>
+      <div class="contact-card">
+        <h3>Feedback</h3>
+        <p>Feature requests and bug reports welcome.</p>
+        <a href="mailto:feedback@wordsanalyser.app" class="contact-link">feedback@wordsanalyser.app</a>
+      </div>
+      <div class="contact-card">
+        <h3>Social</h3>
+        <p>Follow updates.</p>
+        <div class="social-row">
+          <a href="#" class="social-link" aria-label="GitHub">GitHub</a>
+          <a href="#" class="social-link" aria-label="X (Twitter)">X</a>
+          <a href="#" class="social-link" aria-label="LinkedIn">LinkedIn</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRIVACY TAB -->
+  <section class="tab-panel" id="tab-privacy" role="tabpanel" aria-labelledby="tab-privacy-label">
+    <div class="hero hero-sm">
+      <p class="eyebrow">Privacy</p>
+      <h1 class="hero-title">Your files<br><span class="muted">never leave your device.</span></h1>
+      <p class="hero-sub">WordsAnalyser runs entirely in your browser. Nothing is uploaded, stored, or transmitted.</p>
+    </div>
+
+    <div class="privacy-grid">
+      <div class="privacy-card">
+        <h3>100% Local Processing</h3>
+        <p>Every file is read and analysed inside your browser using JavaScript. No server, no backend, no network request.</p>
+      </div>
+      <div class="privacy-card">
+        <h3>No Uploads</h3>
+        <p>Your documents are never uploaded to any external server — not ours, not any third party. There is no server.</p>
+      </div>
+      <div class="privacy-card">
+        <h3>No Permanent Storage</h3>
+        <p>Uploaded files live in memory only, for the current session. Close the tab and everything is gone.</p>
+      </div>
+      <div class="privacy-card">
+        <h3>Session-Only History</h3>
+        <p>Your "recently analysed" list is kept in memory for convenience. It is wiped on refresh or via the Clear Dashboard button.</p>
+      </div>
+      <div class="privacy-card">
+        <h3>No Tracking</h3>
+        <p>No analytics, no cookies, no fingerprinting. WordsAnalyser does not track you.</p>
+      </div>
+      <div class="privacy-card">
+        <h3>Full Control</h3>
+        <p>Remove any file at any time with the ✕ button. Clear everything with one click in the dashboard.</p>
+      </div>
+    </div>
+
+    <div class="privacy-policy">
+      <h2>Privacy Policy</h2>
+      <p><strong>Effective:</strong> 2026 · WordsAnalyser</p>
+      <p>WordsAnalyser is a client-side text analysis tool. All file parsing, text analysis, and export happen locally in your web browser. No user data is transmitted to any server. No uploaded files, text content, or analysis results are stored by WordsAnalyser beyond the current browser session.</p>
+      <p>Because processing is entirely local, WordsAnalyser cannot access, view, or retain your documents. This is not a promise — it is a technical property of the software.</p>
+      <p>Fonts are loaded from Google Fonts. PDF parsing uses Mozilla's PDF.js and DOCX parsing uses Mammoth.js — both loaded from public CDNs and running locally in your browser. No data is sent to these CDNs by the app; only the library code is fetched.</p>
+      <p>By using WordsAnalyser you agree that you are responsible for the files you process and that WordsAnalyser holds no liability for the content of files you analyse.</p>
+      <p>Questions? Email <a href="mailto:privacy@wordsanalyser.app">privacy@wordsanalyser.app</a>.</p>
+    </div>
   </section>
 
 </main>
 
-<aside class="effects-panel slab" id="effectsPanel" aria-label="Effect selector">
-  <button class="effects-toggle" id="effectsToggle" aria-expanded="false" aria-controls="effectsBody">
-    <span class="fx-dot" aria-hidden="true"></span>
-    <span>Effects</span>
-  </button>
-  <div class="effects-body" id="effectsBody">
-    <h3>Switch</h3>
-    <div class="effect-options" id="switchOptions" role="radiogroup" aria-label="Switch animation"></div>
-    <h3>Touch</h3>
-    <div class="effect-options" id="touchOptions" role="radiogroup" aria-label="Touch animation"></div>
+<!-- ============ FOOTER ============ -->
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="footer-brand">
+      <svg class="brand-mark" viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <rect x="8" y="16" width="6" height="32" rx="1.5" fill="currentColor"/>
+        <rect x="20" y="22" width="6" height="26" rx="1.5" fill="currentColor" opacity="0.7"/>
+        <rect x="32" y="10" width="6" height="38" rx="1.5" fill="currentColor"/>
+        <rect x="44" y="18" width="6" height="30" rx="1.5" fill="currentColor" opacity="0.85"/>
+        <rect x="6" y="52" width="52" height="3" rx="1.5" fill="currentColor" opacity="0.5"/>
+      </svg>
+      <span>WordsAnalyser</span>
+    </div>
+    <nav class="footer-nav">
+      <button class="footer-link" data-tab="home">Home</button>
+      <button class="footer-link" data-tab="features">Features</button>
+      <button class="footer-link" data-tab="contact">Contact</button>
+      <button class="footer-link" data-tab="privacy">Privacy</button>
+    </nav>
   </div>
-</aside>
-
-<div class="modal" id="historyModal" role="dialog" aria-modal="true"
-     aria-labelledby="historyTitle" hidden>
-  <div class="modal-card slab">
-    <header class="modal-head">
-      <h2 id="historyTitle">History</h2>
-      <button class="icon-btn" id="historyClose" aria-label="Close history">✕</button>
-    </header>
-    <div class="history-list" id="historyList"></div>
+  <div class="footer-bottom">
+    <p>© <span id="year">2026</span> WordsAnalyser. All Rights Reserved.</p>
+    <button class="back-to-top" id="back-to-top" aria-label="Back to top">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="m6 15 6-6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
   </div>
-</div>
+</footer>
 
-<div class="toasts" id="toasts" aria-live="polite"></div>
+<div class="toast-container" id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/mammoth@1.6.0/mammoth.browser.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.1.4/dist/tesseract.min.js"></script>
-
-<script>
-  window.addEventListener('error', (e) => {
-    console.error('[Lumen] error:', e.message, e.filename, e.lineno);
-    const host = document.getElementById('toasts');
-    if (host) {
-      const t = document.createElement('div');
-      t.className = 'toast err';
-      t.textContent = `ERR: ${e.message}`;
-      host.appendChild(t);
-      setTimeout(() => t.remove(), 5000);
-    }
-  });
-  window.addEventListener('unhandledrejection', (e) => console.error('[Lumen] rejection:', e.reason));
-  window.addEventListener('DOMContentLoaded', () => {
-    console.log('[Lumen] DOM ready',
-      '· pdfjs:', typeof window.pdfjsLib,
-      '· mammoth:', typeof window.mammoth,
-      '· tesseract:', typeof window.Tesseract);
-    setTimeout(() => console.log('[Lumen] app:', window.__lumen), 100);
-  });
-</script>
-<script src="app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+<script src="js/utilities.js"></script>
+<script src="js/navigation.js"></script>
+<script src="js/uploader.js"></script>
+<script src="js/analyzer.js"></script>
+<script src="js/statistics.js"></script>
+<script src="js/tools.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
